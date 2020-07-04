@@ -81,10 +81,10 @@ namespace Microsoft.Extensions.DependencyInjection
             if (builder.Services.Any(x => x.ServiceType == typeof(T)))
             {
                 var message =
-                    $"The has already been registered Producer with the type '{typeof(T).FullName}'. " +
+                    $"There has already been registered Producer with the type '{typeof(T).FullName}'. " +
                     "Typed Producer must be unique. " +
                     "Consider using inheritance to create multiple unique types with the same API surface.";
-                throw new InvalidOperationException(message);   
+                throw new InvalidOperationException(message);
             }
 
             builder.Services.AddSingleton(provider =>
