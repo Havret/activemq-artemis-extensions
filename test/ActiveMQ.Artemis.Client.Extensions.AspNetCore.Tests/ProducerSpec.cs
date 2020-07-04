@@ -51,7 +51,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
                 activeMqBuilder.AddProducer<TestProducer>(address1, RoutingType.Anycast);
             }));
 
-            Assert.Contains($"The has already been registered Producer with the type '{typeof(TestProducer).FullName}'", exception.Message);
+            Assert.Contains($"There has already been registered Producer with the type '{typeof(TestProducer).FullName}'", exception.Message);
         }
 
         private class TestProducer
