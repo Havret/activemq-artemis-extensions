@@ -21,16 +21,8 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
             {
                 throw new InvalidOperationException($"Producer with type {typeof(T).FullName} has already been initialized.");
             }
-            
-            _producer = await _producerFactory(cancellationToken);
-        }
 
-        public async ValueTask DisposeAsync()
-        {
-            if (_producer != null)
-            {
-                await _producer.DisposeAsync();                
-            }
+            _producer = await _producerFactory(cancellationToken);
         }
 
         public Task SendAsync(Message message, Transaction transaction, CancellationToken cancellationToken)
@@ -50,6 +42,14 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
             if (_producer == null)
             {
                 throw new InvalidOperationException("Producer was not initialized.");
+            }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (_producer != null)
+            {
+                await _producer.DisposeAsync().ConfigureAwait(false);
             }
         }
     }
