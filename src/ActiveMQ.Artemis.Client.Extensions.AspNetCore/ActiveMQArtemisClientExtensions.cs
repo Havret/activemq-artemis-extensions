@@ -11,7 +11,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
 {
-    public static class ActiveMQArtemisClientExtensions
+    public static class ActiveMqArtemisClientExtensions
     {
         public static IActiveMqBuilder AddActiveMq(this IServiceCollection services, string name = "")
         {
@@ -78,21 +78,25 @@ namespace Microsoft.Extensions.DependencyInjection
         
         public static IActiveMqBuilder AddProducer<T>(this IActiveMqBuilder builder, string address, RoutingType routingType) where T : class
         {
-            builder.AddProducer(address, routingType);
-            builder.Services.AddSingleton(provider => ActivatorUtilities.CreateInstance<T>(provider, provider.GetRequiredService<IProducer>()));
-            return builder;
-        }
-        
-        public static IActiveMqBuilder AddProducer(this IActiveMqBuilder builder, string address, RoutingType routingType)
-        {
-            builder.Services.AddSingleton<IProducer>(provider =>
+            if (builder.Services.Any(x => x.ServiceType == typeof(T)))
             {
-                return new ActiveMqProducer(async token =>
+                var message =
+                    $"The has already been registered Producer with the type '{typeof(T).FullName}'. " +
+                    "Typed Producer must be unique. " +
+                    "Consider using inheritance to create multiple unique types with the same API surface.";
+                throw new InvalidOperationException(message);   
+            }
+
+            builder.Services.AddSingleton(provider =>
+            {
+                return new TypedActiveMqProducer<T>(async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token);
                     return await connection.CreateProducerAsync(address, routingType, token);
                 });
             });
+            builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqProducer<T>>());
+            builder.Services.AddTransient(provider => ActivatorUtilities.CreateInstance<T>(provider, provider.GetRequiredService<TypedActiveMqProducer<T>>()));
             return builder;
         }
 
