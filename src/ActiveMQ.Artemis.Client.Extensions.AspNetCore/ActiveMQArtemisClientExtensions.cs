@@ -101,6 +101,30 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
+        public static IActiveMqBuilder AddAnonymousProducer<T>(this IActiveMqBuilder builder) where T : class
+        {
+            if (builder.Services.Any(x => x.ServiceType == typeof(T)))
+            {
+                var message =
+                    $"There has already been registered Anonymous Producer with the type '{typeof(T).FullName}'. " +
+                    "Typed Anonymous Producer must be unique. " +
+                    "Consider using inheritance to create multiple unique types with the same API surface.";
+                throw new InvalidOperationException(message);
+            }
+
+            builder.Services.AddSingleton(provider =>
+            {
+                return new TypedActiveMqAnonymousProducer<T>(async token =>
+                {
+                    var connection = await provider.GetConnection(builder.Name, token);
+                    return await connection.CreateAnonymousProducerAsync(token);
+                });
+            });
+            builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqAnonymousProducer<T>>());
+            builder.Services.AddTransient(provider => ActivatorUtilities.CreateInstance<T>(provider, provider.GetRequiredService<TypedActiveMqAnonymousProducer<T>>()));
+            return builder;
+        }
+
         private static ValueTask<IConnection> GetConnection(this IServiceProvider serviceProvider, string name, CancellationToken cancellationToken)
         {
             return serviceProvider.GetService<ConnectionProvider>().GetConnection(name, cancellationToken);
