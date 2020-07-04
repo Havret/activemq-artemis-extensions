@@ -33,12 +33,13 @@ namespace Microsoft.Extensions.DependencyInjection
                 {
                     queueConfigurations = new List<QueueConfiguration>(0);
                 }
+
                 return new ActiveMqTopologyManager(lazyConnection, queueConfigurations);
             });
-            var registry = (TopologyRegistry)services.Single(sd => sd.ServiceType == typeof(TopologyRegistry)).ImplementationInstance;
-            
+            var registry = (TopologyRegistry) services.Single(sd => sd.ServiceType == typeof(TopologyRegistry)).ImplementationInstance;
+
             registry.NamedQueueConfigurations[name] = new List<QueueConfiguration>();
-            
+
             return new ActiveMqBuilder(name, services);
         }
 
@@ -62,7 +63,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 Queue = queue
             }, handler);
         }
-        
+
         private static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, ConsumerConfiguration consumerConfiguration, Func<Message, IConsumer, IServiceProvider, Task> handler)
         {
             builder.Services.AddSingleton(provider =>
@@ -75,7 +76,7 @@ namespace Microsoft.Extensions.DependencyInjection
             });
             return builder;
         }
-        
+
         public static IActiveMqBuilder AddProducer<T>(this IActiveMqBuilder builder, string address, RoutingType routingType) where T : class
         {
             if (builder.Services.Any(x => x.ServiceType == typeof(T)))
