@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using ActiveMQ.Artemis.Client.Extensions.AspNetCore.InternalUtils;
@@ -23,11 +24,12 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
                 return;
             }
 
-            var connection = await _lazyConnection.GetValueAsync(cancellationToken);
-            await using var topologyManager = await connection.CreateTopologyManagerAsync(cancellationToken);
-            foreach (var queueConfiguration in _queueConfigurations)
+            var connection = await _lazyConnection.GetValueAsync(cancellationToken).ConfigureAwait(false);
+            await using var topologyManager = await connection.CreateTopologyManagerAsync(cancellationToken).ConfigureAwait(false);
+            var queues = await topologyManager.GetQueueNamesAsync(cancellationToken).ConfigureAwait(false);
+            foreach (var queueConfiguration in _queueConfigurations.Where(x => !queues.Contains(x.Name)))
             {
-                await topologyManager.CreateQueueAsync(queueConfiguration, cancellationToken);
+                await topologyManager.CreateQueueAsync(queueConfiguration, cancellationToken).ConfigureAwait(false);
             }
         }
     }
