@@ -6,7 +6,7 @@ using ActiveMQ.Artemis.Client.Extensions.AspNetCore.InternalUtils;
 
 namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
 {
-    internal class ActiveMqTopologyManager
+    internal class ActiveMqTopologyManager : IActiveMqTopologyManager
     {
         private readonly AsyncValueLazy<IConnection> _lazyConnection;
         private readonly List<QueueConfiguration> _queueConfigurations;
