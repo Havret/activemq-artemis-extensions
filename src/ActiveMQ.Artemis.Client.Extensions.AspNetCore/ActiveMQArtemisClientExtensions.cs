@@ -7,56 +7,78 @@ using ActiveMQ.Artemis.Client;
 using ActiveMQ.Artemis.Client.Extensions.AspNetCore;
 using ActiveMQ.Artemis.Client.Extensions.AspNetCore.InternalUtils;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 // ReSharper disable once CheckNamespace
 namespace Microsoft.Extensions.DependencyInjection
 {
+    /// <summary>
+    /// Extension methods for setting up ActiveMQ Artemis Client related services in an <see cref="IServiceCollection" />.
+    /// </summary>
     public static class ActiveMqArtemisClientExtensions
     {
-        public static IActiveMqBuilder AddActiveMq(this IServiceCollection services, string name = "")
+        /// <summary>
+        /// Adds ActiveMQ Artemis Client and its dependencies to the <paramref name="services"/>, and allows consumers and producers to be configured.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+        /// <param name="name">The logical name of the <see cref="IConnection"/> to ActiveMQ Artemis.</param>
+        /// <param name="endpoints">A list of endpoints that client may use to connect to the broker.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddActiveMq(this IServiceCollection services, string name, IEnumerable<Endpoint> endpoints)
         {
-            services.AddHostedService<ActiveMqHostedService>();
-            services.TryAddSingleton<ConnectionProvider>();
-            services.TryAddTransient<ConnectionFactory>();
-            services.TryAddSingleton(new TopologyRegistry());
-            services.AddSingleton(provider =>
+            return services.AddActiveMq(name: name, endpoints: endpoints, configureFactory: null);
+        }
+        
+        /// <summary>
+        /// Adds ActiveMQ Artemis Client and its dependencies to the <paramref name="services"/>, and allows consumers and producers to be configured.
+        /// </summary>
+        /// <param name="services">The <see cref="IServiceCollection"/>.</param>
+        /// <param name="name">The logical name of the <see cref="IConnection"/> to ActiveMQ Artemis.</param>
+        /// <param name="endpoints">A list of endpoints that client may use to connect to the broker.</param>
+        /// <param name="configureFactory">A delegate that is used to configure a <see cref="ConnectionFactory"/>.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddActiveMq(this IServiceCollection services, string name, IEnumerable<Endpoint> endpoints, Action<IServiceProvider, ConnectionFactory> configureFactory)
+        {
+            var builder = new ActiveMqBuilder(name, services);
+
+            builder.Services.AddOptions<ActiveMqOptions>(name);
+            builder.Services.AddHostedService<ActiveMqHostedService>();
+            builder.Services.TryAddSingleton<ConnectionProvider>();
+            builder.Services.TryAddTransient<ConnectionFactory>();
+
+            builder.Services.AddSingleton(provider =>
             {
                 var connectionFactory = provider.GetService<ConnectionFactory>();
-                var endpoint = Endpoint.Create(host: "localhost", port: 5672, "guest", "guest");
-                return new NamedConnection(name, token => connectionFactory.CreateAsync(endpoint, token));
+                configureFactory?.Invoke(provider, connectionFactory);
+                return new NamedConnection(name, token => connectionFactory.CreateAsync(endpoints, token));
             });
-            services.AddSingleton(provider =>
+            builder.Services.AddSingleton<IActiveMqTopologyManager>(provider =>
             {
-                var lazyConnection = provider.GetConnection(name);
-                var topologyRegister = provider.GetService<TopologyRegistry>();
-                if (!topologyRegister.NamedQueueConfigurations.TryGetValue(name, out var queueConfigurations))
+                var optionsFactory = provider.GetService<IOptionsFactory<ActiveMqOptions>>();
+                var activeMqOptions = optionsFactory.Create(name);
+                if (activeMqOptions.EnableQueueDeclaration)
                 {
-                    queueConfigurations = new List<QueueConfiguration>(0);
+                    var lazyConnection = provider.GetConnection(name);
+                    return new ActiveMqTopologyManager(lazyConnection, activeMqOptions.QueueConfigurations.ToList());                    
                 }
-
-                return new ActiveMqTopologyManager(lazyConnection, queueConfigurations);
+                else
+                {
+                    return new NullActiveMqTopologyManager();
+                }
             });
-            var registry = (TopologyRegistry) services.Single(sd => sd.ServiceType == typeof(TopologyRegistry)).ImplementationInstance;
 
-            registry.NamedQueueConfigurations[name] = new List<QueueConfiguration>();
-
-            return new ActiveMqBuilder(name, services);
+            return builder;
         }
 
         public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, Func<Message, IConsumer, IServiceProvider, Task> handler)
         {
-            var register = (TopologyRegistry) builder.Services.Single(x => x.ServiceType == typeof(TopologyRegistry)).ImplementationInstance;
-            if (register.NamedQueueConfigurations.TryGetValue(builder.Name, out var queueConfigurations))
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options => options.QueueConfigurations.Add(new QueueConfiguration
             {
-                queueConfigurations.Add(new QueueConfiguration
-                {
-                    Address = address,
-                    RoutingType = routingType,
-                    Name = queue,
-                    AutoCreateAddress = true
-                });
-            }
-
+                Address = address,
+                RoutingType = routingType,
+                Name = queue,
+                AutoCreateAddress = true                
+            }));
             return builder.AddConsumer(new ConsumerConfiguration
             {
                 Address = address,
@@ -77,12 +99,21 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
-        public static IActiveMqBuilder AddProducer<T>(this IActiveMqBuilder builder, string address, RoutingType routingType) where T : class
+        /// <summary>
+        /// Adds the <see cref="IProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <param name="routingType">The routing type of the address.</param>
+        /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
+        /// a transient service.</typeparam>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, RoutingType routingType) where TProducer : class
         {
-            if (builder.Services.Any(x => x.ServiceType == typeof(T)))
+            if (builder.Services.Any(x => x.ServiceType == typeof(TProducer)))
             {
                 var message =
-                    $"There has already been registered Producer with the type '{typeof(T).FullName}'. " +
+                    $"There has already been registered Producer with the type '{typeof(TProducer).FullName}'. " +
                     "Typed Producer must be unique. " +
                     "Consider using inheritance to create multiple unique types with the same API surface.";
                 throw new InvalidOperationException(message);
@@ -90,23 +121,30 @@ namespace Microsoft.Extensions.DependencyInjection
 
             builder.Services.AddSingleton(provider =>
             {
-                return new TypedActiveMqProducer<T>(async token =>
+                return new TypedActiveMqProducer<TProducer>(async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token);
                     return await connection.CreateProducerAsync(address, routingType, token);
                 });
             });
-            builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqProducer<T>>());
-            builder.Services.AddTransient(provider => ActivatorUtilities.CreateInstance<T>(provider, provider.GetRequiredService<TypedActiveMqProducer<T>>()));
+            builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqProducer<TProducer>>());
+            builder.Services.AddTransient(provider => ActivatorUtilities.CreateInstance<TProducer>(provider, provider.GetRequiredService<TypedActiveMqProducer<TProducer>>()));
             return builder;
         }
 
-        public static IActiveMqBuilder AddAnonymousProducer<T>(this IActiveMqBuilder builder) where T : class
+        /// <summary>
+        /// Adds the <see cref="IAnonymousProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
+        /// a transient service.</typeparam>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder) where TProducer : class
         {
-            if (builder.Services.Any(x => x.ServiceType == typeof(T)))
+            if (builder.Services.Any(x => x.ServiceType == typeof(TProducer)))
             {
                 var message =
-                    $"There has already been registered Anonymous Producer with the type '{typeof(T).FullName}'. " +
+                    $"There has already been registered Anonymous Producer with the type '{typeof(TProducer).FullName}'. " +
                     "Typed Anonymous Producer must be unique. " +
                     "Consider using inheritance to create multiple unique types with the same API surface.";
                 throw new InvalidOperationException(message);
@@ -114,14 +152,27 @@ namespace Microsoft.Extensions.DependencyInjection
 
             builder.Services.AddSingleton(provider =>
             {
-                return new TypedActiveMqAnonymousProducer<T>(async token =>
+                return new TypedActiveMqAnonymousProducer<TProducer>(async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token);
                     return await connection.CreateAnonymousProducerAsync(token);
                 });
             });
-            builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqAnonymousProducer<T>>());
-            builder.Services.AddTransient(provider => ActivatorUtilities.CreateInstance<T>(provider, provider.GetRequiredService<TypedActiveMqAnonymousProducer<T>>()));
+            builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>());
+            builder.Services.AddTransient(provider => ActivatorUtilities.CreateInstance<TProducer>(provider, provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>()));
+            return builder;
+        }
+        
+        /// <summary>
+        /// Configures a queue declaration. If a queue declaration is enabled the client will declare queues on the broker according to the provided configuration.
+        /// If the queue doesn't exist it will be created, if the queue does exist it will be updated accordingly.
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="enableQueueDeclaration">Specified if a queue declaration is enabled.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder EnableQueueDeclaration(this IActiveMqBuilder builder, bool enableQueueDeclaration = true)
+        {
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options => options.EnableQueueDeclaration = enableQueueDeclaration);
             return builder;
         }
 

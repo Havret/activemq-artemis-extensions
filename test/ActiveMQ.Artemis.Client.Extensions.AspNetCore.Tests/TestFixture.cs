@@ -20,6 +20,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 
         public static async Task<TestFixture> CreateAsync(Action<IActiveMqBuilder> configureActiveMq = null, Action<IServiceCollection> configureServices = null)
         {
+            var endpoints = new[] { Endpoint.Create(host: "localhost", port: 5672, "guest", "guest") };
             var host = new HostBuilder()
                        .ConfigureWebHost(webBuilder =>
                        {
@@ -28,7 +29,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
                                {
                                    services.AddSingleton<IServer>(serviceProvider => new TestServer(serviceProvider));
                                    configureServices?.Invoke(services);
-                                   configureActiveMq?.Invoke(services.AddActiveMq());
+                                   configureActiveMq?.Invoke(services.AddActiveMq("my-test-artemis", endpoints));
                                })
                                .Configure(app => { });
                        })
@@ -36,8 +37,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             await host.StartAsync();
 
             var connectionFactory = new ConnectionFactory();
-            var endpoint = Endpoint.Create(host: "localhost", port: 5672, "guest", "guest");
-            var connection = await connectionFactory.CreateAsync(endpoint);
+            var connection = await connectionFactory.CreateAsync(endpoints);
 
             return new TestFixture(host, connection);
         }

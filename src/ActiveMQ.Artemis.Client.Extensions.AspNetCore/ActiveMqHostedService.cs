@@ -7,11 +7,11 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
 {
     internal class ActiveMqHostedService : IHostedService
     {
-        private readonly IEnumerable<ActiveMqTopologyManager> _topologyManagers;
+        private readonly IEnumerable<IActiveMqTopologyManager> _topologyManagers;
         private readonly IEnumerable<ActiveMqConsumer> _consumers;
         private readonly IEnumerable<IProducerInitializer> _producerInitializers;
 
-        public ActiveMqHostedService(IEnumerable<ActiveMqTopologyManager> topologyManagers, IEnumerable<ActiveMqConsumer> consumers, IEnumerable<IProducerInitializer> producerInitializers)
+        public ActiveMqHostedService(IEnumerable<IActiveMqTopologyManager> topologyManagers, IEnumerable<ActiveMqConsumer> consumers, IEnumerable<IProducerInitializer> producerInitializers)
         {
             _topologyManagers = topologyManagers;
             _consumers = consumers;

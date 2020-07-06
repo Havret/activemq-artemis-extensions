@@ -5,7 +5,7 @@ using ActiveMQ.Artemis.Client.Transactions;
 
 namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
 {
-    public class TypedActiveMqAnonymousProducer<T> : IAnonymousProducer, IProducerInitializer
+    internal class TypedActiveMqAnonymousProducer<T> : IAnonymousProducer, IProducerInitializer
     {
         private IAnonymousProducer _producer;
         private readonly Func<CancellationToken, Task<IAnonymousProducer>> _producerFactory;
