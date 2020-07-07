@@ -59,7 +59,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 if (activeMqOptions.EnableQueueDeclaration)
                 {
                     var lazyConnection = provider.GetConnection(name);
-                    return new ActiveMqTopologyManager(lazyConnection, activeMqOptions.QueueConfigurations.ToList());                    
+                    return new ActiveMqTopologyManager(lazyConnection, activeMqOptions.QueueConfigurations.ToList(), activeMqOptions.AddressConfigurations);
                 }
                 else
                 {
@@ -70,23 +70,146 @@ namespace Microsoft.Extensions.DependencyInjection
             return builder;
         }
 
-        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, Func<Message, IConsumer, IServiceProvider, Task> handler)
+        /// <summary>
+        /// Adds the <see cref="IConsumer"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <param name="routingType">The routing type of the address.</param>
+        /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, Func<Message, IConsumer, IServiceProvider, Task> handler)
         {
-            builder.Services.Configure<ActiveMqOptions>(builder.Name, options => options.QueueConfigurations.Add(new QueueConfiguration
-            {
-                Address = address,
-                RoutingType = routingType,
-                Name = queue,
-                AutoCreateAddress = true                
-            }));
-            return builder.AddConsumer(new ConsumerConfiguration
-            {
-                Address = address,
-                Queue = queue
-            }, handler);
+            return builder.AddConsumer(address, routingType, new ConsumerOptions(), handler);
         }
 
-        private static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, ConsumerConfiguration consumerConfiguration, Func<Message, IConsumer, IServiceProvider, Task> handler)
+        /// <summary>
+        /// Adds the <see cref="IConsumer"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <param name="routingType">The routing type of the address.</param>
+        /// <param name="consumerOptions">The <see cref="IConsumer"/> configuration.</param>
+        /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, ConsumerOptions consumerOptions,
+            Func<Message, IConsumer, IServiceProvider, Task> handler)
+        {
+            for (int i = 0; i < consumerOptions.ConcurrentConsumers; i++)
+            {
+                builder.AddConsumer(new ConsumerConfiguration
+                {
+                    Address = address,
+                    RoutingType = routingType,
+                    Credit = consumerOptions.Credit,
+                    FilterExpression = consumerOptions.FilterExpression,
+                    NoLocalFilter = consumerOptions.NoLocalFilter
+                }, handler);
+            }
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds the <see cref="IConsumer"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <param name="routingType">The routing type of the address.</param>
+        /// <param name="queue">The queue name.</param>
+        /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, Func<Message, IConsumer, IServiceProvider, Task> handler)
+        {
+            return builder.AddConsumer(address, routingType, queue, new ConsumerOptions(), new QueueOptions(), handler);
+        }
+
+        /// <summary>
+        /// Adds the <see cref="IConsumer"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <param name="routingType">The routing type of the address.</param>
+        /// <param name="queue">The queue name.</param>
+        /// <param name="consumerOptions">The <see cref="IConsumer"/> configuration.</param>
+        /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, ConsumerOptions consumerOptions,
+            Func<Message, IConsumer, IServiceProvider, Task> handler)
+        {
+            return builder.AddConsumer(address, routingType, queue, consumerOptions, new QueueOptions(), handler);
+        }
+
+        /// <summary>
+        /// Adds the <see cref="IConsumer"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <param name="routingType">The routing type of the address.</param>
+        /// <param name="queue">The queue name.</param>
+        /// <param name="queueOptions">The queue configuration that will be used when queue declaration is enabled.</param>
+        /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, QueueOptions queueOptions,
+            Func<Message, IConsumer, IServiceProvider, Task> handler)
+        {
+            return builder.AddConsumer(address, routingType, queue, new ConsumerOptions(), queueOptions, handler);
+        }
+        
+        /// <summary>
+        /// Adds the <see cref="IConsumer"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <param name="routingType">The routing type of the address.</param>
+        /// <param name="queue">The queue name.</param>
+        /// <param name="consumerOptions">The <see cref="IConsumer"/> configuration.</param>
+        /// <param name="queueOptions">The queue configuration that will be used when queue declaration is enabled.</param>
+        /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, ConsumerOptions consumerOptions, QueueOptions queueOptions,
+            Func<Message, IConsumer, IServiceProvider, Task> handler)
+        {
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options =>
+            {
+                options.QueueConfigurations.Add(new QueueConfiguration
+                {
+                    Address = address,
+                    RoutingType = routingType,
+                    Name = queue,
+                    Exclusive = queueOptions.Exclusive,
+                    FilterExpression = queueOptions.FilterExpression,
+                    GroupBuckets = queueOptions.GroupBuckets,
+                    GroupRebalance = queueOptions.GroupRebalance,
+                    MaxConsumers = queueOptions.MaxConsumers,
+                    AutoCreateAddress = queueOptions.AutoCreateAddress,
+                    PurgeOnNoConsumers = queueOptions.PurgeOnNoConsumers
+                });
+                if (options.AddressConfigurations.TryGetValue(address, out var routingTypes))
+                {
+                    routingTypes.Add(routingType);
+                }
+                else
+                {
+                    options.AddressConfigurations[address] = new HashSet<RoutingType> { routingType };
+                }
+            });
+            for (int i = 0; i < consumerOptions.ConcurrentConsumers; i++)
+            {
+                builder.AddConsumer(new ConsumerConfiguration
+                {
+                    Address = address,
+                    Queue = queue,
+                    Credit = consumerOptions.Credit,
+                    FilterExpression = consumerOptions.FilterExpression,
+                    NoLocalFilter = consumerOptions.NoLocalFilter,
+                }, handler);
+            }
+
+            return builder;
+        }
+
+        private static void AddConsumer(this IActiveMqBuilder builder, ConsumerConfiguration consumerConfiguration, Func<Message, IConsumer, IServiceProvider, Task> handler)
         {
             builder.Services.AddSingleton(provider =>
             {
@@ -96,7 +219,6 @@ namespace Microsoft.Extensions.DependencyInjection
                     return await connection.CreateConsumerAsync(consumerConfiguration, token);
                 }, handler);
             });
-            return builder;
         }
 
         /// <summary>
@@ -164,8 +286,8 @@ namespace Microsoft.Extensions.DependencyInjection
         }
         
         /// <summary>
-        /// Configures a queue declaration. If a queue declaration is enabled the client will declare queues on the broker according to the provided configuration.
-        /// If the queue doesn't exist it will be created, if the queue does exist it will be updated accordingly.
+        /// Configures a queue declaration. If a queue declaration is enabled, the client will declare queues on the broker according to the provided configuration
+        /// If the queue doesn't exist, it will be created. If the queue does exist, it will be updated accordingly.
         /// </summary>
         /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
         /// <param name="enableQueueDeclaration">Specified if a queue declaration is enabled.</param>
@@ -173,6 +295,19 @@ namespace Microsoft.Extensions.DependencyInjection
         public static IActiveMqBuilder EnableQueueDeclaration(this IActiveMqBuilder builder, bool enableQueueDeclaration = true)
         {
             builder.Services.Configure<ActiveMqOptions>(builder.Name, options => options.EnableQueueDeclaration = enableQueueDeclaration);
+            return builder;
+        }
+
+        /// <summary>
+        /// Configures an address declaration. If an address declaration is enabled, the client will declare addresses on the broker according to the provided confided configuration.
+        /// If the address doesn't exist, it will be created. If the address does exist, it will be updated accordingly.
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="enableAddressDeclaration">Specified if an address declaration is enabled.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder EnableAddressDeclaration(this IActiveMqBuilder builder, bool enableAddressDeclaration = true)
+        {
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options => options.EnableAddressDeclaration = enableAddressDeclaration);
             return builder;
         }
 

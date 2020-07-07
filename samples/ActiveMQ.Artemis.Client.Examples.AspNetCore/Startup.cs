@@ -17,7 +17,7 @@ namespace ActiveMQ.Artemis.Client.Examples.AspNetCore
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddActiveMq(name: "my-artemis-node", endpoints: new[] { Endpoint.Create(host: "localhost", port: 5672, "guest", "guest") }, configureFactory: (provider, factory) =>
+            services.AddActiveMq(name: "my-artemis-cluster", endpoints: new[] { Endpoint.Create(host: "localhost", port: 5672, "guest", "guest") }, configureFactory: (provider, factory) =>
                     {
                         factory.LoggerFactory = provider.GetService<ILoggerFactory>();
                         factory.RecoveryPolicy = RecoveryPolicyFactory.ExponentialBackoff(initialDelay: TimeSpan.FromSeconds(1), maxDelay: TimeSpan.FromSeconds(30));
@@ -35,7 +35,8 @@ namespace ActiveMQ.Artemis.Client.Examples.AspNetCore
                         await consumer.AcceptAsync(message);
                     })
                     .AddProducer<MyTypedMessageProducer>("a1", RoutingType.Multicast)
-                    .EnableQueueDeclaration();
+                    .EnableQueueDeclaration()
+                    .EnableAddressDeclaration();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
