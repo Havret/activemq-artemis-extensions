@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -32,11 +33,12 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
                        .EnableQueueDeclaration();
             });
 
-            await using var producer = await testFixture.Connection.CreateProducerAsync(address, RoutingType.Multicast);
+            await using var producer = await testFixture.Connection.CreateProducerAsync(address, RoutingType.Multicast, testFixture.CancellationToken);
             for (int i = 0; i < 100; i++)
             {
-                await producer.SendAsync(new Message("foo" + i));
+                await producer.SendAsync(new Message("foo" + i), testFixture.CancellationToken);
             }
+
             Assert.Equal(3, consumers.Distinct().Count());
             Assert.Equal(100, messages.Count);
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -25,15 +26,15 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 
             await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder => { activeMqBuilder.AddAnonymousProducer<TestProducer>(); });
 
-            var consumer1 = await testFixture.Connection.CreateConsumerAsync(address1, RoutingType.Anycast);
-            var consumer2 = await testFixture.Connection.CreateConsumerAsync(address2, RoutingType.Multicast);
+            var consumer1 = await testFixture.Connection.CreateConsumerAsync(address1, RoutingType.Anycast, cancellationToken: testFixture.CancellationToken);
+            var consumer2 = await testFixture.Connection.CreateConsumerAsync(address2, RoutingType.Multicast, cancellationToken: testFixture.CancellationToken);
 
             var testProducer = testFixture.Services.GetRequiredService<TestProducer>();
-            await testProducer.SendMessage(address1, RoutingType.Anycast, "foo1");
-            await testProducer.SendMessage(address2, RoutingType.Multicast, "foo2");
+            await testProducer.SendMessage(address1, RoutingType.Anycast, "foo1", testFixture.CancellationToken);
+            await testProducer.SendMessage(address2, RoutingType.Multicast, "foo2", testFixture.CancellationToken);
 
-            Assert.Equal("foo1", (await consumer1.ReceiveAsync()).GetBody<string>());
-            Assert.Equal("foo2", (await consumer2.ReceiveAsync()).GetBody<string>());
+            Assert.Equal("foo1", (await consumer1.ReceiveAsync(testFixture.CancellationToken)).GetBody<string>());
+            Assert.Equal("foo2", (await consumer2.ReceiveAsync(testFixture.CancellationToken)).GetBody<string>());
         }
 
         [Fact]
@@ -53,7 +54,10 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             private readonly IAnonymousProducer _producer;
 
             public TestProducer(IAnonymousProducer producer) => _producer = producer;
-            public Task SendMessage(string address, RoutingType routingType, string text) => _producer.SendAsync(address, routingType, new Message(text));
+            public Task SendMessage(string address, RoutingType routingType, string text, CancellationToken cancellationToken)
+            {
+                return _producer.SendAsync(address, routingType, new Message(text), cancellationToken);
+            }
         }
 
         [Fact]
