@@ -24,12 +24,12 @@ namespace ActiveMQ.Artemis.Client.Examples.AspNetCore
                         factory.MessageIdPolicyFactory = MessageIdPolicyFactory.GuidMessageIdPolicy;
                         factory.AutomaticRecoveryEnabled = true;
                     })
-                    .AddConsumer("a1", RoutingType.Multicast, "q1", async (message, consumer, serviceProvider) =>
+                    .AddConsumer("a1", RoutingType.Multicast, "q1", async (message, consumer, token, serviceProvider) =>
                     {
                         Console.WriteLine("q1: " + message.GetBody<string>());
                         await consumer.AcceptAsync(message);
                     })
-                    .AddConsumer("a1", RoutingType.Multicast, "q2", async (message, consumer, serviceProvider) =>
+                    .AddConsumer("a1", RoutingType.Multicast, "q2", async (message, consumer, token, serviceProvider) =>
                     {
                         Console.WriteLine("q2: " + message.GetBody<string>());
                         await consumer.AcceptAsync(message);

@@ -40,7 +40,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
         {
             foreach (var activeMqConsumer in _consumers)
             {
-                await activeMqConsumer.StopAsync(cancellationToken);
+                await activeMqConsumer.StopAsync();
             }
         }
     }
