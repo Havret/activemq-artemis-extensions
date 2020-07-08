@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -32,12 +33,12 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
                 activeMqBuilder.AddProducer<TestProducer>(address1, RoutingType.Anycast);
             });
 
-            var consumer = await testFixture.Connection.CreateConsumerAsync(address1, RoutingType.Anycast);
+            var consumer = await testFixture.Connection.CreateConsumerAsync(address1, RoutingType.Anycast, testFixture.CancellationToken);
 
             var testProducer = testFixture.Services.GetRequiredService<TestProducer>();
-            await testProducer.SendMessage("foo");
+            await testProducer.SendMessage("foo", testFixture.CancellationToken);
 
-            var msg = await consumer.ReceiveAsync();
+            var msg = await consumer.ReceiveAsync(testFixture.CancellationToken);
             Assert.Equal("foo", msg.GetBody<string>());
         }
 
@@ -59,7 +60,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             private readonly IProducer _producer;
 
             public TestProducer(IProducer producer) => _producer = producer;
-            public Task SendMessage(string text) => _producer.SendAsync(new Message(text));
+            public Task SendMessage(string text, CancellationToken cancellationToken) => _producer.SendAsync(new Message(text), cancellationToken);
         }
 
         [Fact]
