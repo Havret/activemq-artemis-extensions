@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
@@ -14,27 +15,29 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             var address = Guid.NewGuid().ToString();
             var queue = Guid.NewGuid().ToString();
 
-            var consumers = new HashSet<IConsumer>();
-            var messages = new List<Message>();
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            var consumers = new ConcurrentBag<IConsumer>();
+            var messages = new ConcurrentBag<Message>();
+            
+            async Task MessageHandler(Message message, IConsumer consumer, IServiceProvider provider)
             {
-                activeMqBuilder.AddConsumer(address, RoutingType.Multicast, queue, new ConsumerOptions { ConcurrentConsumers = 3 }, async (message, consumer, provider) =>
-                               {
-                                   consumers.Add(consumer);
-                                   messages.Add(message);
-                                   await consumer.AcceptAsync(message);
-                               })
-                               .EnableAddressDeclaration()
-                               .EnableQueueDeclaration();
+                consumers.Add(consumer);
+                messages.Add(message);
+                await consumer.AcceptAsync(message);
+            }
+            
+            await using var testFixture = await TestFixture.CreateAsync(builder =>
+            {
+                builder.AddConsumer(address, RoutingType.Multicast, queue, new ConsumerOptions { ConcurrentConsumers = 3 }, MessageHandler)
+                       .EnableAddressDeclaration()
+                       .EnableQueueDeclaration();
             });
 
-            var producer = await testFixture.Connection.CreateProducerAsync(address, RoutingType.Multicast);
+            await using var producer = await testFixture.Connection.CreateProducerAsync(address, RoutingType.Multicast);
             for (int i = 0; i < 100; i++)
             {
                 await producer.SendAsync(new Message("foo" + i));
             }
-
-            Assert.Equal(3, consumers.Count);
+            Assert.Equal(3, consumers.Distinct().Count());
             Assert.Equal(100, messages.Count);
         }
     }
