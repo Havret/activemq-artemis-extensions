@@ -46,7 +46,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 }
                 return new NamedConnection(name, token => connectionFactory.CreateAsync(endpoints, token));
             });
-            builder.Services.AddSingleton<IActiveMqTopologyManager>(provider =>
+            builder.Services.AddSingleton(provider =>
             {
                 var optionsFactory = provider.GetService<IOptionsFactory<ActiveMqOptions>>();
                 var activeMqOptions = optionsFactory.Create(name);
