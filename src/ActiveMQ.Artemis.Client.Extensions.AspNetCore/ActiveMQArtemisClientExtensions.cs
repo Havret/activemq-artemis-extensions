@@ -38,12 +38,13 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 var optionsFactory = provider.GetService<IOptionsFactory<ActiveMqOptions>>();
                 var activeMqOptions = optionsFactory.Create(name);
-                
+
                 var connectionFactory = provider.GetService<ConnectionFactory>();
                 foreach (var connectionFactoryAction in activeMqOptions.ConnectionFactoryActions)
                 {
                     connectionFactoryAction(provider, connectionFactory);
                 }
+
                 return new NamedConnection(name, token => connectionFactory.CreateAsync(endpoints, token));
             });
             builder.Services.AddSingleton(provider =>
@@ -156,7 +157,7 @@ namespace Microsoft.Extensions.DependencyInjection
         {
             return builder.AddConsumer(address, routingType, queue, new ConsumerOptions(), queueOptions, handler);
         }
-        
+
         /// <summary>
         /// Adds the <see cref="IConsumer"/>.
         /// </summary>
@@ -221,22 +222,23 @@ namespace Microsoft.Extensions.DependencyInjection
                 }, handler);
             });
         }
-        
+
         /// <summary>
         /// Adds the <see cref="IProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
         /// </summary>
         /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
         /// <param name="address">The address name.</param>
+        /// <param name="producerLifetime">The lifetime with which to register the <typeparam name="TProducer" /> in the container.</param>
         /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
-        /// a transient service.</typeparam>
+        /// a transient service by default.</typeparam>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
-        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address) where TProducer : class
+        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, ServiceLifetime producerLifetime = ServiceLifetime.Transient) where TProducer : class
         {
             var producerConfiguration = new ProducerConfiguration
             {
                 Address = address,
             };
-            return builder.AddProducer<TProducer>(producerConfiguration);
+            return builder.AddProducer<TProducer>(producerConfiguration, producerLifetime);
         }
 
         /// <summary>
@@ -245,19 +247,20 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
         /// <param name="address">The address name.</param>
         /// <param name="routingType">The routing type of the address.</param>
+        /// <param name="producerLifetime">The lifetime with which to register the <typeparam name="TProducer" /> in the container.</param>
         /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
-        /// a transient service.</typeparam>
+        /// a transient service by default.</typeparam>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
-        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, RoutingType routingType) where TProducer : class
+        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, RoutingType routingType, ServiceLifetime producerLifetime = ServiceLifetime.Transient) where TProducer : class
         {
             var producerConfiguration = new ProducerConfiguration
             {
                 Address = address,
                 RoutingType = routingType,
             };
-            return builder.AddProducer<TProducer>(producerConfiguration);
+            return builder.AddProducer<TProducer>(producerConfiguration, producerLifetime);
         }
-        
+
         /// <summary>
         /// Adds the <see cref="IProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
         /// </summary>
@@ -265,36 +268,40 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <param name="address">The address name.</param>
         /// <param name="routingType">The routing type of the address.</param>
         /// <param name="producerOptions">The <see cref="IProducer"/> configuration.</param>
+        /// <param name="producerLifetime">The lifetime with which to register the <typeparam name="TProducer" /> in the container.</param>
         /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
-        /// a transient service.</typeparam>
+        /// a transient service by default.</typeparam>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
-        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, RoutingType routingType, ProducerOptions producerOptions) where TProducer : class
+        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, RoutingType routingType, ProducerOptions producerOptions,
+            ServiceLifetime producerLifetime = ServiceLifetime.Transient) where TProducer : class
         {
             var producerConfiguration = producerOptions.ToConfiguration();
             producerConfiguration.Address = address;
             producerConfiguration.RoutingType = routingType;
-            
-            return builder.AddProducer<TProducer>(producerConfiguration);
+
+            return builder.AddProducer<TProducer>(producerConfiguration, producerLifetime);
         }
-        
+
         /// <summary>
         /// Adds the <see cref="IProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
         /// </summary>
         /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
         /// <param name="address">The address name.</param>
         /// <param name="producerOptions">The <see cref="IProducer"/> configuration.</param>
+        /// <param name="producerLifetime">The lifetime with which to register the <typeparam name="TProducer" /> in the container.</param>
         /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
-        /// a transient service.</typeparam>
+        /// a transient service by default.</typeparam>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
-        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, ProducerOptions producerOptions) where TProducer : class
+        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, ProducerOptions producerOptions, ServiceLifetime producerLifetime = ServiceLifetime.Transient)
+            where TProducer : class
         {
             var producerConfiguration = producerOptions.ToConfiguration();
             producerConfiguration.Address = address;
-            
-            return builder.AddProducer<TProducer>(producerConfiguration);
+
+            return builder.AddProducer<TProducer>(producerConfiguration, producerLifetime);
         }
 
-        private static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, ProducerConfiguration producerConfiguration) where TProducer : class
+        private static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, ProducerConfiguration producerConfiguration, ServiceLifetime producerLifetime) where TProducer : class
         {
             if (builder.Services.Any(x => x.ServiceType == typeof(TProducer)))
             {
@@ -312,9 +319,10 @@ namespace Microsoft.Extensions.DependencyInjection
                     routingTypes = new HashSet<RoutingType>();
                     options.AddressConfigurations.Add(producerConfiguration.Address, routingTypes);
                 }
+
                 if (producerConfiguration.RoutingType.HasValue)
                 {
-                    routingTypes.Add(producerConfiguration.RoutingType.Value);    
+                    routingTypes.Add(producerConfiguration.RoutingType.Value);
                 }
                 else
                 {
@@ -322,7 +330,7 @@ namespace Microsoft.Extensions.DependencyInjection
                     routingTypes.Add(RoutingType.Multicast);
                 }
             });
-            
+
             builder.Services.AddSingleton(provider =>
             {
                 return new TypedActiveMqProducer<TProducer>(async token =>
@@ -332,7 +340,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 });
             });
             builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqProducer<TProducer>>());
-            builder.Services.AddTransient(provider => ActivatorUtilities.CreateInstance<TProducer>(provider, provider.GetRequiredService<TypedActiveMqProducer<TProducer>>()));
+            builder.Services.Add(ServiceDescriptor.Describe(typeof(TProducer),
+                provider => ActivatorUtilities.CreateInstance<TProducer>(provider, provider.GetRequiredService<TypedActiveMqProducer<TProducer>>()),
+                producerLifetime));
             return builder;
         }
 
@@ -392,7 +402,7 @@ namespace Microsoft.Extensions.DependencyInjection
             builder.Services.AddTransient(provider => ActivatorUtilities.CreateInstance<TProducer>(provider, provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>()));
             return builder;
         }
-        
+
         /// <summary>
         /// Configures a queue declaration. If a queue declaration is enabled, the client will declare queues on the broker according to the provided configuration
         /// If the queue doesn't exist, it will be created. If the queue does exist, it will be updated accordingly.
