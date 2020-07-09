@@ -302,6 +302,32 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
         public static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder) where TProducer : class
         {
+            var anonymousProducerConfiguration = new AnonymousProducerConfiguration();
+            return builder.AddAnonymousProducer<TProducer>(anonymousProducerConfiguration);
+        }
+
+        /// <summary>
+        /// Adds the <see cref="IAnonymousProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="producerOptions">The <see cref="IAnonymousProducer"/> configuration.</param>
+        /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
+        /// a transient service.</typeparam>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder, ProducerOptions producerOptions) where TProducer : class
+        {
+            var anonymousProducerConfiguration = new AnonymousProducerConfiguration
+            {
+                MessagePriority = producerOptions.MessagePriority,
+                MessageDurabilityMode = producerOptions.MessageDurabilityMode,
+                MessageIdPolicy = producerOptions.MessageIdPolicy,
+                SetMessageCreationTime = producerOptions.SetMessageCreationTime
+            };
+            return builder.AddAnonymousProducer<TProducer>(anonymousProducerConfiguration);
+        }
+
+        private static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder, AnonymousProducerConfiguration producerConfiguration) where TProducer : class
+        {
             if (builder.Services.Any(x => x.ServiceType == typeof(TProducer)))
             {
                 var message =
@@ -315,8 +341,8 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 return new TypedActiveMqAnonymousProducer<TProducer>(async token =>
                 {
-                    var connection = await provider.GetConnection(builder.Name, token);
-                    return await connection.CreateAnonymousProducerAsync(token);
+                    var connection = await provider.GetConnection(builder.Name, token).ConfigureAwait(false);
+                    return await connection.CreateAnonymousProducerAsync(producerConfiguration, token).ConfigureAwait(false);
                 });
             });
             builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>());
