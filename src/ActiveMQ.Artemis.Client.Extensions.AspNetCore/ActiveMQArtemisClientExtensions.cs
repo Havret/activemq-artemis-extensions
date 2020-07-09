@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ActiveMQ.Artemis.Client;
 using ActiveMQ.Artemis.Client.Extensions.AspNetCore;
+using ActiveMQ.Artemis.Client.Extensions.AspNetCore.InternalExtensions;
 using ActiveMQ.Artemis.Client.Extensions.AspNetCore.InternalUtils;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
@@ -49,15 +50,10 @@ namespace Microsoft.Extensions.DependencyInjection
             {
                 var optionsFactory = provider.GetService<IOptionsFactory<ActiveMqOptions>>();
                 var activeMqOptions = optionsFactory.Create(name);
-                if (activeMqOptions.EnableQueueDeclaration)
-                {
-                    var lazyConnection = provider.GetConnection(name);
-                    return new ActiveMqTopologyManager(lazyConnection, activeMqOptions.QueueConfigurations.ToList(), activeMqOptions.AddressConfigurations);
-                }
-                else
-                {
-                    return new NullActiveMqTopologyManager();
-                }
+                var queueConfigurations = activeMqOptions.EnableQueueDeclaration ? activeMqOptions.QueueConfigurations : new List<QueueConfiguration>(0);
+                var addressConfigurations = activeMqOptions.EnableAddressDeclaration ? activeMqOptions.AddressConfigurations : new Dictionary<string, HashSet<RoutingType>>(0);
+                var lazyConnection = provider.GetConnection(name);
+                return new ActiveMqTopologyManager(lazyConnection, queueConfigurations, addressConfigurations);
             });
 
             return builder;
@@ -225,6 +221,23 @@ namespace Microsoft.Extensions.DependencyInjection
                 }, handler);
             });
         }
+        
+        /// <summary>
+        /// Adds the <see cref="IProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
+        /// a transient service.</typeparam>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address) where TProducer : class
+        {
+            var producerConfiguration = new ProducerConfiguration
+            {
+                Address = address,
+            };
+            return builder.AddProducer<TProducer>(producerConfiguration);
+        }
 
         /// <summary>
         /// Adds the <see cref="IProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
@@ -244,7 +257,7 @@ namespace Microsoft.Extensions.DependencyInjection
             };
             return builder.AddProducer<TProducer>(producerConfiguration);
         }
-
+        
         /// <summary>
         /// Adds the <see cref="IProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
         /// </summary>
@@ -257,15 +270,27 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
         public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, RoutingType routingType, ProducerOptions producerOptions) where TProducer : class
         {
-            var producerConfiguration = new ProducerConfiguration
-            {
-                Address = address,
-                RoutingType = routingType,
-                MessagePriority = producerOptions.MessagePriority,
-                MessageDurabilityMode = producerOptions.MessageDurabilityMode,
-                MessageIdPolicy = producerOptions.MessageIdPolicy,
-                SetMessageCreationTime = producerOptions.SetMessageCreationTime
-            };
+            var producerConfiguration = producerOptions.ToConfiguration();
+            producerConfiguration.Address = address;
+            producerConfiguration.RoutingType = routingType;
+            
+            return builder.AddProducer<TProducer>(producerConfiguration);
+        }
+        
+        /// <summary>
+        /// Adds the <see cref="IProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <param name="producerOptions">The <see cref="IProducer"/> configuration.</param>
+        /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
+        /// a transient service.</typeparam>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, ProducerOptions producerOptions) where TProducer : class
+        {
+            var producerConfiguration = producerOptions.ToConfiguration();
+            producerConfiguration.Address = address;
+            
             return builder.AddProducer<TProducer>(producerConfiguration);
         }
 
@@ -280,6 +305,24 @@ namespace Microsoft.Extensions.DependencyInjection
                 throw new InvalidOperationException(message);
             }
 
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options =>
+            {
+                if (!options.AddressConfigurations.TryGetValue(producerConfiguration.Address, out var routingTypes))
+                {
+                    routingTypes = new HashSet<RoutingType>();
+                    options.AddressConfigurations.Add(producerConfiguration.Address, routingTypes);
+                }
+                if (producerConfiguration.RoutingType.HasValue)
+                {
+                    routingTypes.Add(producerConfiguration.RoutingType.Value);    
+                }
+                else
+                {
+                    routingTypes.Add(RoutingType.Anycast);
+                    routingTypes.Add(RoutingType.Multicast);
+                }
+            });
+            
             builder.Services.AddSingleton(provider =>
             {
                 return new TypedActiveMqProducer<TProducer>(async token =>

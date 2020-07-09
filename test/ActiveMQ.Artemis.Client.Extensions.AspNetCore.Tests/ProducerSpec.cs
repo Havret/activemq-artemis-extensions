@@ -74,7 +74,27 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             await testProducer.SendMessage("foo", testFixture.CancellationToken);
 
             var msg = await consumer.ReceiveAsync(testFixture.CancellationToken);
-            Assert.Equal((byte?)9, msg.Priority);
+            Assert.Equal((byte?) 9, msg.Priority);
+        }
+
+        [Fact]
+        public async Task Should_register_producer_without_()
+        {
+            var address = Guid.NewGuid().ToString();
+            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            {
+                activeMqBuilder.AddProducer<TestProducer>(address);
+                activeMqBuilder.EnableAddressDeclaration();
+            });
+
+            var anycastConsumer = await testFixture.Connection.CreateConsumerAsync(address, RoutingType.Anycast, testFixture.CancellationToken);
+            var multicastConsumer = await testFixture.Connection.CreateConsumerAsync(address, RoutingType.Multicast, testFixture.CancellationToken);
+
+            var testProducer = testFixture.Services.GetRequiredService<TestProducer>();
+            await testProducer.SendMessage("foo", testFixture.CancellationToken);
+
+            Assert.Equal("foo", (await anycastConsumer.ReceiveAsync(testFixture.CancellationToken)).GetBody<string>());
+            Assert.Equal("foo", (await multicastConsumer.ReceiveAsync(testFixture.CancellationToken)).GetBody<string>());
         }
 
         private class TestProducer

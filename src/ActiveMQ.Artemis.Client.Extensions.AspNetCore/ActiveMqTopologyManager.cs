@@ -9,10 +9,10 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
     internal class ActiveMqTopologyManager : IActiveMqTopologyManager
     {
         private readonly AsyncValueLazy<IConnection> _lazyConnection;
-        private readonly List<QueueConfiguration> _queueConfigurations;
-        private readonly Dictionary<string, HashSet<RoutingType>> _addressConfigurations;
+        private readonly IReadOnlyList<QueueConfiguration> _queueConfigurations;
+        private readonly IReadOnlyDictionary<string, HashSet<RoutingType>> _addressConfigurations;
 
-        public ActiveMqTopologyManager(AsyncValueLazy<IConnection> lazyConnection, List<QueueConfiguration> queueConfigurations, Dictionary<string, HashSet<RoutingType>> addressConfigurations)
+        public ActiveMqTopologyManager(AsyncValueLazy<IConnection> lazyConnection, IReadOnlyList<QueueConfiguration> queueConfigurations, IReadOnlyDictionary<string, HashSet<RoutingType>> addressConfigurations)
         {
             _lazyConnection = lazyConnection;
             _queueConfigurations = queueConfigurations;
