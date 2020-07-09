@@ -78,7 +78,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         }
 
         [Fact]
-        public async Task Should_register_producer_without_()
+        public async Task Should_register_producer_without_RoutingType()
         {
             var address = Guid.NewGuid().ToString();
             await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
