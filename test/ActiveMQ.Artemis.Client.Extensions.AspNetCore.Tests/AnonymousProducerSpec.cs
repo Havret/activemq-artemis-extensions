@@ -49,11 +49,34 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             Assert.Contains($"There has already been registered Anonymous Producer with the type '{typeof(TestProducer).FullName}'", exception.Message);
         }
 
+        [Fact]
+        public async Task Should_register_configured_producer()
+        {
+            var address1 = Guid.NewGuid().ToString();
+
+            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            {
+                activeMqBuilder.AddAnonymousProducer<TestProducer>(new ProducerOptions
+                {
+                    MessagePriority = 9
+                });
+            });
+
+            var consumer = await testFixture.Connection.CreateConsumerAsync(address1, RoutingType.Anycast, testFixture.CancellationToken);
+
+            var testProducer = testFixture.Services.GetRequiredService<TestProducer>();
+            await testProducer.SendMessage(address1, RoutingType.Anycast, "foo", testFixture.CancellationToken);
+
+            var msg = await consumer.ReceiveAsync(testFixture.CancellationToken);
+            Assert.Equal((byte?) 9, msg.Priority);
+        }
+
         private class TestProducer
         {
             private readonly IAnonymousProducer _producer;
 
             public TestProducer(IAnonymousProducer producer) => _producer = producer;
+
             public Task SendMessage(string address, RoutingType routingType, string text, CancellationToken cancellationToken)
             {
                 return _producer.SendAsync(address, routingType, new Message(text), cancellationToken);
