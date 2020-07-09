@@ -350,13 +350,14 @@ namespace Microsoft.Extensions.DependencyInjection
         /// Adds the <see cref="IAnonymousProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
         /// </summary>
         /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="producerLifetime">The lifetime with which to register the <typeparam name="TProducer" /> in the container.</param>
         /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
-        /// a transient service.</typeparam>
+        /// a transient service by default.</typeparam>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
-        public static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder) where TProducer : class
+        public static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder, ServiceLifetime producerLifetime = ServiceLifetime.Transient) where TProducer : class
         {
             var anonymousProducerConfiguration = new AnonymousProducerConfiguration();
-            return builder.AddAnonymousProducer<TProducer>(anonymousProducerConfiguration);
+            return builder.AddAnonymousProducer<TProducer>(anonymousProducerConfiguration, producerLifetime);
         }
 
         /// <summary>
@@ -364,10 +365,11 @@ namespace Microsoft.Extensions.DependencyInjection
         /// </summary>
         /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
         /// <param name="producerOptions">The <see cref="IAnonymousProducer"/> configuration.</param>
+        /// <param name="producerLifetime">The lifetime with which to register the <typeparam name="TProducer" /> in the container.</param>
         /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
-        /// a transient service.</typeparam>
+        /// a transient service by default.</typeparam>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
-        public static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder, ProducerOptions producerOptions) where TProducer : class
+        public static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder, ProducerOptions producerOptions, ServiceLifetime producerLifetime = ServiceLifetime.Transient) where TProducer : class
         {
             var anonymousProducerConfiguration = new AnonymousProducerConfiguration
             {
@@ -376,10 +378,10 @@ namespace Microsoft.Extensions.DependencyInjection
                 MessageIdPolicy = producerOptions.MessageIdPolicy,
                 SetMessageCreationTime = producerOptions.SetMessageCreationTime
             };
-            return builder.AddAnonymousProducer<TProducer>(anonymousProducerConfiguration);
+            return builder.AddAnonymousProducer<TProducer>(anonymousProducerConfiguration, producerLifetime);
         }
 
-        private static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder, AnonymousProducerConfiguration producerConfiguration) where TProducer : class
+        private static IActiveMqBuilder AddAnonymousProducer<TProducer>(this IActiveMqBuilder builder, AnonymousProducerConfiguration producerConfiguration, ServiceLifetime producerLifetime) where TProducer : class
         {
             if (builder.Services.Any(x => x.ServiceType == typeof(TProducer)))
             {
@@ -399,7 +401,9 @@ namespace Microsoft.Extensions.DependencyInjection
                 });
             });
             builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>());
-            builder.Services.AddTransient(provider => ActivatorUtilities.CreateInstance<TProducer>(provider, provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>()));
+            builder.Services.Add(ServiceDescriptor.Describe(typeof(TProducer),
+                provider => ActivatorUtilities.CreateInstance<TProducer>(provider, provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>()),
+                producerLifetime));
             return builder;
         }
 
