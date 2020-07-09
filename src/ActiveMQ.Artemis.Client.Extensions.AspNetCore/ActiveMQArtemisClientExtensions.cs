@@ -26,19 +26,6 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
         public static IActiveMqBuilder AddActiveMq(this IServiceCollection services, string name, IEnumerable<Endpoint> endpoints)
         {
-            return services.AddActiveMq(name: name, endpoints: endpoints, configureFactory: null);
-        }
-        
-        /// <summary>
-        /// Adds ActiveMQ Artemis Client and its dependencies to the <paramref name="services"/>, and allows consumers and producers to be configured.
-        /// </summary>
-        /// <param name="services">The <see cref="IServiceCollection"/>.</param>
-        /// <param name="name">The logical name of the <see cref="IConnection"/> to ActiveMQ Artemis.</param>
-        /// <param name="endpoints">A list of endpoints that client may use to connect to the broker.</param>
-        /// <param name="configureFactory">A delegate that is used to configure a <see cref="ConnectionFactory"/>.</param>
-        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
-        public static IActiveMqBuilder AddActiveMq(this IServiceCollection services, string name, IEnumerable<Endpoint> endpoints, Action<IServiceProvider, ConnectionFactory> configureFactory)
-        {
             var builder = new ActiveMqBuilder(name, services);
 
             builder.Services.AddOptions<ActiveMqOptions>(name);
@@ -48,8 +35,14 @@ namespace Microsoft.Extensions.DependencyInjection
 
             builder.Services.AddSingleton(provider =>
             {
+                var optionsFactory = provider.GetService<IOptionsFactory<ActiveMqOptions>>();
+                var activeMqOptions = optionsFactory.Create(name);
+                
                 var connectionFactory = provider.GetService<ConnectionFactory>();
-                configureFactory?.Invoke(provider, connectionFactory);
+                foreach (var connectionFactoryAction in activeMqOptions.ConnectionFactoryActions)
+                {
+                    connectionFactoryAction(provider, connectionFactory);
+                }
                 return new NamedConnection(name, token => connectionFactory.CreateAsync(endpoints, token));
             });
             builder.Services.AddSingleton<IActiveMqTopologyManager>(provider =>
@@ -67,6 +60,18 @@ namespace Microsoft.Extensions.DependencyInjection
                 }
             });
 
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds action to configure to configure a <see cref="ConnectionFactory"/>.
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="configureFactoryAction">A delegate that is used to configure a <see cref="ConnectionFactory"/>.</param>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder ConfigureConnectionFactory(this IActiveMqBuilder builder, Action<IServiceProvider, ConnectionFactory> configureFactoryAction)
+        {
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options => options.ConnectionFactoryActions.Add(configureFactoryAction));
             return builder;
         }
 
