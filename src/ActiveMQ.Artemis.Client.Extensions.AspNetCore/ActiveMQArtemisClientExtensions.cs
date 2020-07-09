@@ -237,6 +237,40 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
         public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, RoutingType routingType) where TProducer : class
         {
+            var producerConfiguration = new ProducerConfiguration
+            {
+                Address = address,
+                RoutingType = routingType,
+            };
+            return builder.AddProducer<TProducer>(producerConfiguration);
+        }
+
+        /// <summary>
+        /// Adds the <see cref="IProducer"/> and configures a binding between the <typeparam name="TProducer" /> and named <see cref="IProducer"/> instance.  
+        /// </summary>
+        /// <param name="builder">The <see cref="IActiveMqBuilder"/>.</param>
+        /// <param name="address">The address name.</param>
+        /// <param name="routingType">The routing type of the address.</param>
+        /// <param name="producerOptions">The <see cref="IProducer"/> configuration.</param>
+        /// <typeparam name="TProducer">The type of the typed producer. The type specified will be registered in the service collection as
+        /// a transient service.</typeparam>
+        /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
+        public static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, string address, RoutingType routingType, ProducerOptions producerOptions) where TProducer : class
+        {
+            var producerConfiguration = new ProducerConfiguration
+            {
+                Address = address,
+                RoutingType = routingType,
+                MessagePriority = producerOptions.MessagePriority,
+                MessageDurabilityMode = producerOptions.MessageDurabilityMode,
+                MessageIdPolicy = producerOptions.MessageIdPolicy,
+                SetMessageCreationTime = producerOptions.SetMessageCreationTime
+            };
+            return builder.AddProducer<TProducer>(producerConfiguration);
+        }
+
+        private static IActiveMqBuilder AddProducer<TProducer>(this IActiveMqBuilder builder, ProducerConfiguration producerConfiguration) where TProducer : class
+        {
             if (builder.Services.Any(x => x.ServiceType == typeof(TProducer)))
             {
                 var message =
@@ -251,7 +285,7 @@ namespace Microsoft.Extensions.DependencyInjection
                 return new TypedActiveMqProducer<TProducer>(async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token);
-                    return await connection.CreateProducerAsync(address, routingType, token);
+                    return await connection.CreateProducerAsync(producerConfiguration, token);
                 });
             });
             builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqProducer<TProducer>>());
