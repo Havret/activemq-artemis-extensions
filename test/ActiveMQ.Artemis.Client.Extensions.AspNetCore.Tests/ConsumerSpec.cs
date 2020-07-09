@@ -17,12 +17,10 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             var queue = Guid.NewGuid().ToString();
 
             var consumers = new ConcurrentBag<IConsumer>();
-            var messages = new ConcurrentBag<Message>();
 
             async Task MessageHandler(Message message, IConsumer consumer, CancellationToken token, IServiceProvider provider)
             {
                 consumers.Add(consumer);
-                messages.Add(message);
                 await consumer.AcceptAsync(message);
             }
 
@@ -40,7 +38,6 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             }
 
             Assert.Equal(3, consumers.Distinct().Count());
-            Assert.Equal(100, messages.Count);
         }
 
         [Fact]
