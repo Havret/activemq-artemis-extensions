@@ -12,4 +12,8 @@
     <PackageReference Include="Unofficial.ActiveMQ.Artemis.Client" Version="1.1.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="ActiveMQ.Artemis.Client.Extensions.AspNetCore.csproj.DotSettings" />
+  </ItemGroup>
+
 </Project>
