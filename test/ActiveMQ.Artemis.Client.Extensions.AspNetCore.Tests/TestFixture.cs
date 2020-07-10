@@ -1,11 +1,15 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests.Logging;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Xunit.Abstractions;
 
 namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 {
@@ -21,7 +25,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             _cts = cts;
         }
 
-        public static async Task<TestFixture> CreateAsync(Action<IActiveMqBuilder> configureActiveMq = null, Action<IServiceCollection> configureServices = null)
+        public static async Task<TestFixture> CreateAsync(ITestOutputHelper testOutputHelper, Action<IActiveMqBuilder> configureActiveMq = null, Action<IServiceCollection> configureServices = null)
         {
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             var endpoints = new[] { Endpoint.Create(host: "localhost", port: 5672, "guest", "guest") };
@@ -33,9 +37,22 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
                                {
                                    services.AddSingleton<IServer>(serviceProvider => new TestServer(serviceProvider));
                                    configureServices?.Invoke(services);
-                                   configureActiveMq?.Invoke(services.AddActiveMq("my-test-artemis", endpoints));
+                                   configureActiveMq?.Invoke(services.AddActiveMq("my-test-artemis", endpoints).ConfigureConnectionFactory((provider, factory) =>
+                                   {
+                                       factory.LoggerFactory = provider.GetService<ILoggerFactory>();
+                                   }));
                                })
-                               .Configure(app => { });
+                               .Configure(app => { })
+                               .ConfigureLogging((hostingContext, logging) =>
+                               {
+                                   logging.AddConfiguration(hostingContext.Configuration.GetSection("Logging"));
+                                   logging.AddProvider(new TestLoggerProvider(testOutputHelper));
+                                   logging.SetMinimumLevel(LogLevel.Trace);
+                               })
+                               .ConfigureAppConfiguration((builder, config) =>
+                               {
+                                   config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                               });
                        })
                        .Build();
             await host.StartAsync(cts.Token);

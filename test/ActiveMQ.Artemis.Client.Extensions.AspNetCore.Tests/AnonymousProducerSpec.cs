@@ -3,15 +3,23 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 {
     public class AnonymousProducerSpec
     {
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public AnonymousProducerSpec(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
+
         [Fact]
         public async Task Should_register_anonymous_producer()
         {
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder => { activeMqBuilder.AddAnonymousProducer<TestProducer>(); });
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder => { activeMqBuilder.AddAnonymousProducer<TestProducer>(); });
 
             var testProducer = testFixture.Services.GetRequiredService<TestProducer>();
 
@@ -24,7 +32,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             var address1 = Guid.NewGuid().ToString();
             var address2 = Guid.NewGuid().ToString();
 
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder => { activeMqBuilder.AddAnonymousProducer<TestProducer>(); });
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder => { activeMqBuilder.AddAnonymousProducer<TestProducer>(); });
 
             var consumer1 = await testFixture.Connection.CreateConsumerAsync(address1, RoutingType.Anycast, cancellationToken: testFixture.CancellationToken);
             var consumer2 = await testFixture.Connection.CreateConsumerAsync(address2, RoutingType.Multicast, cancellationToken: testFixture.CancellationToken);
@@ -40,7 +48,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         [Fact]
         public async Task Throws_when_producer_with_the_same_type_registered_twice()
         {
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => TestFixture.CreateAsync(activeMqBuilder =>
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder =>
             {
                 activeMqBuilder.AddAnonymousProducer<TestProducer>();
                 activeMqBuilder.AddAnonymousProducer<TestProducer>();
@@ -54,7 +62,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         {
             var address1 = Guid.NewGuid().ToString();
 
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder =>
             {
                 activeMqBuilder.AddAnonymousProducer<TestProducer>(new ProducerOptions
                 {
@@ -86,7 +94,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         [Fact]
         public async Task Should_register_multiple_producers()
         {
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder =>
             {
                 activeMqBuilder.AddAnonymousProducer<TestProducer1>();
                 activeMqBuilder.AddAnonymousProducer<TestProducer2>();
