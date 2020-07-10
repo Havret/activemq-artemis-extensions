@@ -5,11 +5,19 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 {
     public class ConsumerSpec
     {
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public ConsumerSpec(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
+
         [Fact]
         public async Task Should_create_multiple_concurrent_consumers()
         {
@@ -24,7 +32,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
                 await consumer.AcceptAsync(message);
             }
 
-            await using var testFixture = await TestFixture.CreateAsync(builder =>
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, builder =>
             {
                 builder.AddConsumer(address, RoutingType.Multicast, queue, new ConsumerOptions { ConcurrentConsumers = 3 }, MessageHandler)
                        .EnableAddressDeclaration()
@@ -46,7 +54,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             var address = Guid.NewGuid().ToString();
             var queue = Guid.NewGuid().ToString();
 
-            var testFixture = await TestFixture.CreateAsync(builder =>
+            var testFixture = await TestFixture.CreateAsync(_testOutputHelper, builder =>
             {
                 builder.EnableAddressDeclaration()
                        .EnableQueueDeclaration()
@@ -62,7 +70,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 
             var stopHostTask = Task.Run(async () => await testFixture.DisposeAsync());
             var result = await Task.WhenAny(stopHostTask, Task.Delay(TimeSpan.FromSeconds(5)));
-            
+
             Assert.Equal(stopHostTask, result);
         }
     }

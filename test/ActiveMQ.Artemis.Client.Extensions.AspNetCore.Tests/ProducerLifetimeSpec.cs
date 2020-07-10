@@ -2,11 +2,19 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 {
     public class ProducerLifetimeSpec
     {
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public ProducerLifetimeSpec(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
+
         [Fact]
         public async Task Should_register_producer_with_transient_service_lifetime_by_default_1()
         {
@@ -28,9 +36,9 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             }));
         }
 
-        private static async Task ShouldRegisterProducerWithTransientServiceLifetimeByDefault(Action<IActiveMqBuilder> registerProducerAction)
+        private async Task ShouldRegisterProducerWithTransientServiceLifetimeByDefault(Action<IActiveMqBuilder> registerProducerAction)
         {
-            await using var testFixture = await TestFixture.CreateAsync(registerProducerAction);
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, registerProducerAction);
 
             var typedProducer1 = testFixture.Services.GetService<TestProducer>();
             var typedProducer2 = testFixture.Services.GetService<TestProducer>();
@@ -60,9 +68,9 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             }, ServiceLifetime.Singleton));
         }
 
-        private static async Task ShouldRegisterProducerWithSingletonServiceLifetime(Action<IActiveMqBuilder> registerProducerAction)
+        private async Task ShouldRegisterProducerWithSingletonServiceLifetime(Action<IActiveMqBuilder> registerProducerAction)
         {
-            await using var testFixture = await TestFixture.CreateAsync(registerProducerAction);
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, registerProducerAction);
 
             var typedProducer1 = testFixture.Services.GetService<TestProducer>();
             var typedProducer2 = testFixture.Services.GetService<TestProducer>();
@@ -92,17 +100,17 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             }, ServiceLifetime.Scoped));
         }
 
-        private static async Task ShouldRegisterProducerWithScopedServiceLifetime(Action<IActiveMqBuilder> registerProducerAction)
+        private async Task ShouldRegisterProducerWithScopedServiceLifetime(Action<IActiveMqBuilder> registerProducerAction)
         {
-            await using var testFixture = await TestFixture.CreateAsync(registerProducerAction);
-            
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, registerProducerAction);
+
             using var scope = testFixture.Services.CreateScope();
             var typedProducer1Scope1 = scope.ServiceProvider.GetService<TestProducer>();
             var typedProducer2Scope1 = scope.ServiceProvider.GetService<TestProducer>();
-            
+
             using var scope2 = testFixture.Services.CreateScope();
             var typedProducerScope2 = scope2.ServiceProvider.GetService<TestProducer>();
-            
+
             Assert.Equal(typedProducer1Scope1, typedProducer2Scope1);
             Assert.Equal(typedProducer1Scope1.Producer, typedProducer2Scope1.Producer);
             Assert.NotEqual(typedProducerScope2, typedProducer1Scope1);

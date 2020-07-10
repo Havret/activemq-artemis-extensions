@@ -3,17 +3,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 {
     public class ProducerSpec
     {
+        private readonly ITestOutputHelper _testOutputHelper;
+
+        public ProducerSpec(ITestOutputHelper testOutputHelper)
+        {
+            _testOutputHelper = testOutputHelper;
+        }
+        
         [Fact]
         public async Task Should_register_producer()
         {
             var address1 = Guid.NewGuid().ToString();
 
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder =>
             {
                 activeMqBuilder.AddProducer<TestProducer>(address1, RoutingType.Anycast);
             });
@@ -28,7 +36,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         {
             var address1 = Guid.NewGuid().ToString();
 
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder =>
             {
                 activeMqBuilder.AddProducer<TestProducer>(address1, RoutingType.Anycast);
             });
@@ -45,7 +53,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         [Fact]
         public async Task Throws_when_producer_with_the_same_type_registered_twice()
         {
-            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => TestFixture.CreateAsync(activeMqBuilder =>
+            var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder =>
             {
                 var address1 = Guid.NewGuid().ToString();
                 activeMqBuilder.AddProducer<TestProducer>(address1, RoutingType.Anycast);
@@ -60,7 +68,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         {
             var address1 = Guid.NewGuid().ToString();
 
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder =>
             {
                 activeMqBuilder.AddProducer<TestProducer>(address1, RoutingType.Anycast, new ProducerOptions
                 {
@@ -81,7 +89,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         public async Task Should_register_producer_without_RoutingType()
         {
             var address = Guid.NewGuid().ToString();
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder =>
             {
                 activeMqBuilder.AddProducer<TestProducer>(address);
                 activeMqBuilder.EnableAddressDeclaration();
@@ -111,7 +119,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             var address1 = Guid.NewGuid().ToString();
             var address2 = Guid.NewGuid().ToString();
 
-            await using var testFixture = await TestFixture.CreateAsync(activeMqBuilder =>
+            await using var testFixture = await TestFixture.CreateAsync(_testOutputHelper, activeMqBuilder =>
             {
                 activeMqBuilder.AddProducer<TestProducer1>(address1, RoutingType.Anycast);
                 activeMqBuilder.AddProducer<TestProducer2>(address2, RoutingType.Anycast);
