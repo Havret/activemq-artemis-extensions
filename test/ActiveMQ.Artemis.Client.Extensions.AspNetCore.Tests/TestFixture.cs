@@ -71,8 +71,13 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         {
             await Connection.DisposeAsync();
             await _host.StopAsync(_cts.Token);
+            
+            if (_host is IAsyncDisposable host)
+                await host.DisposeAsync();
+            else
+                _host.Dispose();
+            
             _cts.Dispose();
-            _host.Dispose();
         }
     }
 }
