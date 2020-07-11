@@ -30,7 +30,16 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         [Fact]
         public async Task Should_register_producer_with_transient_service_lifetime_by_default_3()
         {
-            await ShouldRegisterProducerWithTransientServiceLifetimeByDefault(builder => builder.AddProducer<TestProducer>(Guid.NewGuid().ToString(), RoutingType.Multicast, new ProducerOptions()
+            await ShouldRegisterProducerWithTransientServiceLifetimeByDefault(builder => builder.AddProducer<TestProducer>(Guid.NewGuid().ToString(), RoutingType.Multicast, new ProducerOptions
+            {
+                MessagePriority = 9
+            }));
+        }
+        
+        [Fact]
+        public async Task Should_register_producer_with_transient_service_lifetime_by_default_4()
+        {
+            await ShouldRegisterProducerWithTransientServiceLifetimeByDefault(builder => builder.AddProducer<TestProducer>(Guid.NewGuid().ToString(), new ProducerOptions
             {
                 MessagePriority = 9
             }));
@@ -67,6 +76,15 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
                 MessagePriority = 9
             }, ServiceLifetime.Singleton));
         }
+        
+        [Fact]
+        public async Task Should_register_producer_with_singleton_service_lifetime_4()
+        {
+            await ShouldRegisterProducerWithSingletonServiceLifetime(builder => builder.AddProducer<TestProducer>(Guid.NewGuid().ToString(), new ProducerOptions
+            {
+                MessagePriority = 9
+            }, ServiceLifetime.Singleton));
+        }
 
         private async Task ShouldRegisterProducerWithSingletonServiceLifetime(Action<IActiveMqBuilder> registerProducerAction)
         {
@@ -95,6 +113,15 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         public async Task Should_register_producer_with_scoped_service_lifetime_3()
         {
             await ShouldRegisterProducerWithScopedServiceLifetime(builder => builder.AddProducer<TestProducer>(Guid.NewGuid().ToString(), RoutingType.Multicast, new ProducerOptions
+            {
+                MessagePriority = 9
+            }, ServiceLifetime.Scoped));
+        }
+        
+        [Fact]
+        public async Task Should_register_producer_with_scoped_service_lifetime_4()
+        {
+            await ShouldRegisterProducerWithScopedServiceLifetime(builder => builder.AddProducer<TestProducer>(Guid.NewGuid().ToString(), new ProducerOptions
             {
                 MessagePriority = 9
             }, ServiceLifetime.Scoped));
