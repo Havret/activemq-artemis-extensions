@@ -9,10 +9,12 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
     {
         private IAnonymousProducer _producer;
         private readonly Func<CancellationToken, Task<IAnonymousProducer>> _producerFactory;
+        private readonly SendObservable _sendObservable;
 
-        public TypedActiveMqAnonymousProducer(Func<CancellationToken, Task<IAnonymousProducer>> producerFactory)
+        public TypedActiveMqAnonymousProducer(Func<CancellationToken, Task<IAnonymousProducer>> producerFactory, SendObservable sendObservable)
         {
             _producerFactory = producerFactory;
+            _sendObservable = sendObservable;
         }
 
         public async ValueTask Initialize(CancellationToken cancellationToken)
@@ -25,14 +27,18 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
             _producer = await _producerFactory(cancellationToken);
         }
 
-        public Task SendAsync(string address, RoutingType? routingType, Message message, Transaction transaction, CancellationToken cancellationToken)
+        public async Task SendAsync(string address, RoutingType? routingType, Message message, Transaction transaction, CancellationToken cancellationToken)
         {
-            return _producer.SendAsync(address, routingType, message, transaction, cancellationToken);
+            _sendObservable.PreSend(address, routingType, message);
+            await _producer.SendAsync(address, routingType, message, transaction, cancellationToken).ConfigureAwait(false);
+            _sendObservable.PostSend(address, routingType, message);
         }
 
         public void Send(string address, RoutingType? routingType, Message message, CancellationToken cancellationToken)
         {
+            _sendObservable.PreSend(address, routingType, message);
             _producer.Send(address, routingType, message, cancellationToken);
+            _sendObservable.PostSend(address, routingType, message);
         }
 
         public async ValueTask DisposeAsync()

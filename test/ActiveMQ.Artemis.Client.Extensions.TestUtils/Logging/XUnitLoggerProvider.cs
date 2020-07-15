@@ -1,20 +1,20 @@
 ﻿using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests.Logging
+namespace ActiveMQ.Artemis.Client.Extensions.TestUtils.Logging
 {
-    public class TestLoggerProvider : ILoggerProvider
+    public class XUnitLoggerProvider : ILoggerProvider
     {
         private readonly ITestOutputHelper _testOutputHelper;
 
-        public TestLoggerProvider(ITestOutputHelper testOutputHelper)
+        public XUnitLoggerProvider(ITestOutputHelper testOutputHelper)
         {
             _testOutputHelper = testOutputHelper;
         }
 
         public ILogger CreateLogger(string categoryName)
         {
-            return new TestLogger(_testOutputHelper, categoryName);
+            return new XUnitLogger(_testOutputHelper, categoryName);
         }
 
         public void Dispose()

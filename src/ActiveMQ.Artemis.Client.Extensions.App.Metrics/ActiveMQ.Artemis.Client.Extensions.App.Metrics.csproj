@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ActiveMQ.Artemis.Client.Extensions.AspNetCore\ActiveMQ.Artemis.Client.Extensions.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="App.Metrics.Abstractions" Version="4.1.0" />
+  </ItemGroup>
+
+</Project>
