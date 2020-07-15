@@ -5,7 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ActiveMQ.Artemis.Client.Extensions.AspNetCore\ActiveMQ.Artemis.Client.Extensions.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\ActiveMQ.Artemis.Client.Extensions.DependencyInjection\ActiveMQ.Artemis.Client.Extensions.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\ActiveMQ.Artemis.Client.Extensions.Hosting\ActiveMQ.Artemis.Client.Extensions.Hosting.csproj" />
   </ItemGroup>
 
 </Project>

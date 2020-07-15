@@ -1,5 +1,5 @@
 ﻿using System.Threading;
-using ActiveMQ.Artemis.Client.Extensions.AspNetCore;
+using ActiveMQ.Artemis.Client.Extensions.DependencyInjection;
 using App.Metrics;
 using App.Metrics.Histogram;
 using App.Metrics.Meter;

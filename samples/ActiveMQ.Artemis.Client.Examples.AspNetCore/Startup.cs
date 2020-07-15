@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ActiveMQ.Artemis.Client.Extensions.DependencyInjection;
+using ActiveMQ.Artemis.Client.Extensions.Hosting;
 
 namespace ActiveMQ.Artemis.Client.Examples.AspNetCore
 {
@@ -38,6 +40,8 @@ namespace ActiveMQ.Artemis.Client.Examples.AspNetCore
                     .AddProducer<MyTypedMessageProducer>("a1", RoutingType.Multicast)
                     .EnableQueueDeclaration()
                     .EnableAddressDeclaration();
+
+            services.AddActiveMqHostedService();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

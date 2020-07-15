@@ -4,19 +4,19 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <LangVersion>8.0</LangVersion>
     <IsPackable>false</IsPackable>
+    <RootNamespace>ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="App.Metrics.AspNetCore.All" Version="4.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.5" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="xunit" Version="2.4.0" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.0" />
     <PackageReference Include="coverlet.collector" Version="1.0.1" />
-    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="3.1.5" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ActiveMQ.Artemis.Client.Extensions.App.Metrics\ActiveMQ.Artemis.Client.Extensions.App.Metrics.csproj" />
+    <ProjectReference Include="..\..\src\ActiveMQ.Artemis.Client.Extensions.DependencyInjection\ActiveMQ.Artemis.Client.Extensions.DependencyInjection.csproj" />
     <ProjectReference Include="..\..\src\ActiveMQ.Artemis.Client.Extensions.Hosting\ActiveMQ.Artemis.Client.Extensions.Hosting.csproj" />
     <ProjectReference Include="..\ActiveMQ.Artemis.Client.Extensions.TestUtils\ActiveMQ.Artemis.Client.Extensions.TestUtils.csproj" />
   </ItemGroup>

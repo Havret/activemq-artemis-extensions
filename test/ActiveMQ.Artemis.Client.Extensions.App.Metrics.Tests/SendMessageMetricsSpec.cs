@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using ActiveMQ.Artemis.Client.Extensions.DependencyInjection;
 using App.Metrics;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;

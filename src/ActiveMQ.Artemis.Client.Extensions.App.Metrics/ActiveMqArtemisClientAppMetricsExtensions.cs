@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Linq;
-using ActiveMQ.Artemis.Client.Extensions.AspNetCore;
+using ActiveMQ.Artemis.Client.Extensions.DependencyInjection;
 using App.Metrics;
 using Microsoft.Extensions.DependencyInjection;
 
