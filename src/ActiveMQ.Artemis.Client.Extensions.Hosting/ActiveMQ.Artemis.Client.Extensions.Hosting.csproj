@@ -5,12 +5,12 @@
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
 
-  <ItemGroup>    
+  <ItemGroup>
     <ProjectReference Include="..\ActiveMQ.Artemis.Client.Extensions.DependencyInjection\ActiveMQ.Artemis.Client.Extensions.DependencyInjection.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="App.Metrics.Abstractions" Version="4.1.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.5" />
   </ItemGroup>
 
 </Project>

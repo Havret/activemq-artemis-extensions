@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using ActiveMQ.Artemis.Client.Extensions.DependencyInjection;
 using ActiveMQ.Artemis.Client.Extensions.Hosting;
 using ActiveMQ.Artemis.Client.Extensions.TestUtils.Logging;
-using App.Metrics;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.AspNetCore.TestHost;
@@ -14,7 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace ActiveMQ.Artemis.Client.Extensions.App.Metrics.Tests
+namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 {
     public class TestFixture : IAsyncDisposable
     {
@@ -30,7 +29,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.App.Metrics.Tests
 
         public static async Task<TestFixture> CreateAsync(ITestOutputHelper testOutputHelper, Action<IActiveMqBuilder> configureActiveMq = null, Action<IServiceCollection> configureServices = null)
         {
-            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5000));
+            var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             var endpoints = new[] { Endpoint.Create(host: "localhost", port: 5672, "guest", "guest") };
             var host = new HostBuilder()
                        .ConfigureWebHost(webBuilder =>
@@ -38,10 +37,9 @@ namespace ActiveMQ.Artemis.Client.Extensions.App.Metrics.Tests
                            webBuilder
                                .ConfigureServices(services =>
                                {
-                                   services.AddMetrics();
                                    services.AddSingleton<IServer>(serviceProvider => new TestServer(serviceProvider));
                                    configureServices?.Invoke(services);
-                                   configureActiveMq?.Invoke(services.AddActiveMq( "my-test-artemis", endpoints).ConfigureConnectionFactory((provider, factory) =>
+                                   configureActiveMq?.Invoke(services.AddActiveMq("my-test-artemis", endpoints).ConfigureConnectionFactory((provider, factory) =>
                                    {
                                        factory.LoggerFactory = provider.GetService<ILoggerFactory>();
                                    }));
@@ -70,7 +68,6 @@ namespace ActiveMQ.Artemis.Client.Extensions.App.Metrics.Tests
 
         public IServiceProvider Services => _host.Services;
         public IConnection Connection { get; }
-        public IMetrics Metrics => _host.Services.GetService<IMetrics>();
         public CancellationToken CancellationToken => _cts.Token;
 
         public async ValueTask DisposeAsync()
