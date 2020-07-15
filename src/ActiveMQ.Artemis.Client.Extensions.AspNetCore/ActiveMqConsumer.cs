@@ -10,15 +10,20 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
     internal class ActiveMqConsumer
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly ContextualReceiveObservable _receiveObservable;
         private readonly AsyncValueLazy<IConsumer> _consumer;
         private readonly Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> _handler;
         private Task _task;
         private CancellationTokenSource _cts;
         private readonly ILogger<ActiveMqConsumer> _logger;
 
-        public ActiveMqConsumer(IServiceProvider serviceProvider, Func<CancellationToken, Task<IConsumer>> consumerFactory, Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+        public ActiveMqConsumer(IServiceProvider serviceProvider,
+            ContextualReceiveObservable receiveObservable,
+            Func<CancellationToken, Task<IConsumer>> consumerFactory,
+            Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
         {
             _serviceProvider = serviceProvider;
+            _receiveObservable = receiveObservable;
             _logger = serviceProvider.GetService<ILogger<ActiveMqConsumer>>();
             _consumer = new AsyncValueLazy<IConsumer>(consumerFactory);
             _handler = handler;
@@ -35,7 +40,9 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
                     try
                     {
                         var msg = await consumer.ReceiveAsync(_cts.Token).ConfigureAwait(false);
+                        _receiveObservable.PreReceive(msg);
                         await _handler(msg, consumer, _cts.Token, _serviceProvider).ConfigureAwait(false);
+                        _receiveObservable.PostReceive(msg);
                     }
                     catch (OperationCanceledException)
                     {

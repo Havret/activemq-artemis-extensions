@@ -9,10 +9,12 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
     {
         private IProducer _producer;
         private readonly Func<CancellationToken, Task<IProducer>> _producerFactory;
+        private readonly ContextualSendObservable _sendObservable;
 
-        public TypedActiveMqProducer(Func<CancellationToken, Task<IProducer>> producerFactory)
+        public TypedActiveMqProducer(Func<CancellationToken, Task<IProducer>> producerFactory, ContextualSendObservable sendObservable)
         {
             _producerFactory = producerFactory;
+            _sendObservable = sendObservable;
         }
 
         async ValueTask IProducerInitializer.Initialize(CancellationToken cancellationToken)
@@ -25,16 +27,20 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore
             _producer = await _producerFactory(cancellationToken);
         }
 
-        public Task SendAsync(Message message, Transaction transaction, CancellationToken cancellationToken)
+        public async Task SendAsync(Message message, Transaction transaction, CancellationToken cancellationToken)
         {
             CheckState();
-            return _producer.SendAsync(message, transaction, cancellationToken);
+            _sendObservable.PreSend(message);
+            await _producer.SendAsync(message, transaction, cancellationToken).ConfigureAwait(false);
+            _sendObservable.PostSend(message);
         }
 
         public void Send(Message message, CancellationToken cancellationToken)
         {
             CheckState();
+            _sendObservable.PreSend(message);
             _producer.Send(message, cancellationToken);
+            _sendObservable.PostSend(message);
         }
 
         private void CheckState()

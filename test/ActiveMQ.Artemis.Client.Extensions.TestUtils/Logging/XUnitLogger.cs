@@ -2,23 +2,23 @@
 using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 
-namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests.Logging
+namespace ActiveMQ.Artemis.Client.Extensions.TestUtils.Logging
 {
-    public sealed class TestLogger : ILogger
+    public sealed class XUnitLogger : ILogger
     {
-        private static readonly string _loglevelPadding = ": ";
-        private static readonly string _messagePadding;
+        private static readonly string LoglevelPadding = ": ";
+        private static readonly string MessagePadding;
 
         private readonly string _name;
         private readonly ITestOutputHelper _output;
 
-        static TestLogger()
+        static XUnitLogger()
         {
             var logLevelString = GetLogLevelString(LogLevel.Information);
-            _messagePadding = new string(' ', logLevelString.Length + _loglevelPadding.Length);
+            MessagePadding = new string(' ', logLevelString.Length + LoglevelPadding.Length);
         }
 
-        public TestLogger(ITestOutputHelper output, string name)
+        public XUnitLogger(ITestOutputHelper output, string name)
         {
             _output = output;
             _name = name;
@@ -57,7 +57,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests.Logging
 
             if (!string.IsNullOrEmpty(message))
             {
-                _output.WriteLine($"{_messagePadding}{message}");
+                _output.WriteLine($"{MessagePadding}{message}");
             }
 
             if (exception != null)

@@ -56,6 +56,34 @@ namespace Microsoft.Extensions.DependencyInjection
                 var lazyConnection = provider.GetConnection(name);
                 return new ActiveMqTopologyManager(lazyConnection, queueConfigurations, addressConfigurations);
             });
+            builder.Services.AddSingleton(provider =>
+            {
+                var optionsFactory = provider.GetService<IOptionsFactory<ActiveMqOptions>>();
+                var activeMqOptions = optionsFactory.Create(name);
+                var sendObservers = activeMqOptions.SendObserverRegistrations.Select(x =>
+                                                   {
+                                                       if (x.ImplementationFactory != null)
+                                                           return x.ImplementationFactory(provider);
+                                                       else
+                                                           return ActivatorUtilities.GetServiceOrCreateInstance(provider, x.Type) as ISendObserver;
+                                                   })
+                                                   .ToArray();
+                return new SendObservable(name, sendObservers);
+            });
+            builder.Services.AddSingleton(provider =>
+            {
+                var optionsFactory = provider.GetService<IOptionsFactory<ActiveMqOptions>>();
+                var activeMqOptions = optionsFactory.Create(name);
+                var receiveObservers = activeMqOptions.ReceiveObserverRegistrations.Select(x =>
+                                                      {
+                                                          if (x.ImplementationFactory != null)
+                                                              return x.ImplementationFactory(provider);
+                                                          else
+                                                              return ActivatorUtilities.GetServiceOrCreateInstance(provider, x.Type) as IReceiveObserver;
+                                                      })
+                                                      .ToArray();
+                return new ReceiveObservable(name, receiveObservers);
+            });
 
             return builder;
         }
@@ -106,6 +134,10 @@ namespace Microsoft.Extensions.DependencyInjection
                     Credit = consumerOptions.Credit,
                     FilterExpression = consumerOptions.FilterExpression,
                     NoLocalFilter = consumerOptions.NoLocalFilter
+                }, observable =>
+                {
+                    observable.Address = address;
+                    observable.RoutingType = routingType;
                 }, handler);
             }
 
@@ -205,17 +237,28 @@ namespace Microsoft.Extensions.DependencyInjection
                     Credit = consumerOptions.Credit,
                     FilterExpression = consumerOptions.FilterExpression,
                     NoLocalFilter = consumerOptions.NoLocalFilter,
+                }, observable =>
+                {
+                    observable.Address = address;
+                    observable.RoutingType = routingType;
+                    observable.Queue = queue;
                 }, handler);
             }
 
             return builder;
         }
 
-        private static void AddConsumer(this IActiveMqBuilder builder, ConsumerConfiguration consumerConfiguration, Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+        private static void AddConsumer(this IActiveMqBuilder builder,
+            ConsumerConfiguration consumerConfiguration,
+            Action<ContextualReceiveObservable> configureContextualReceiveObservableAction,
+            Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
         {
             builder.Services.AddSingleton(provider =>
             {
-                return new ActiveMqConsumer(provider, async token =>
+                var receiveObservable = provider.GetServices<ReceiveObservable>().Single(x => x.Name == builder.Name);
+                var contextualReceiveObservable = new ContextualReceiveObservable(receiveObservable);
+                configureContextualReceiveObservableAction(contextualReceiveObservable);
+                return new ActiveMqConsumer(provider, contextualReceiveObservable, async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token);
                     return await connection.CreateConsumerAsync(consumerConfiguration, token);
@@ -333,11 +376,17 @@ namespace Microsoft.Extensions.DependencyInjection
 
             builder.Services.AddSingleton(provider =>
             {
+                var sendObservable = provider.GetServices<SendObservable>().Single(x => x.Name == builder.Name);
+                var contextualSendObservable = new ContextualSendObservable(sendObservable)
+                {
+                    Address = producerConfiguration.Address,
+                    RoutingType = producerConfiguration.RoutingType
+                };
                 return new TypedActiveMqProducer<TProducer>(async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token);
                     return await connection.CreateProducerAsync(producerConfiguration, token);
-                });
+                }, contextualSendObservable);
             });
             builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqProducer<TProducer>>());
             builder.Services.Add(ServiceDescriptor.Describe(typeof(TProducer),
@@ -394,11 +443,12 @@ namespace Microsoft.Extensions.DependencyInjection
 
             builder.Services.AddSingleton(provider =>
             {
+                var sendObservable = provider.GetServices<SendObservable>().Single(x => x.Name == builder.Name);
                 return new TypedActiveMqAnonymousProducer<TProducer>(async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token).ConfigureAwait(false);
                     return await connection.CreateAnonymousProducerAsync(producerConfiguration, token).ConfigureAwait(false);
-                });
+                }, sendObservable);
             });
             builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>());
             builder.Services.Add(ServiceDescriptor.Describe(typeof(TProducer),
@@ -441,6 +491,50 @@ namespace Microsoft.Extensions.DependencyInjection
         private static AsyncValueLazy<IConnection> GetConnection(this IServiceProvider serviceProvider, string name)
         {
             return serviceProvider.GetService<ConnectionProvider>().GetConnection(name);
+        }
+
+        public static IActiveMqBuilder AddSendObserver<TSendObserver>(this IActiveMqBuilder builder) where TSendObserver : class, ISendObserver
+        {
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options =>
+            {
+                options.SendObserverRegistrations.Add(new SendObserverRegistration
+                {
+                    Type = typeof(TSendObserver),
+                });
+            });
+            return builder;
+        }
+
+        public static IActiveMqBuilder AddSendObserver<TSendObserver>(this IActiveMqBuilder builder, Func<IServiceProvider, ISendObserver> implementationFactory) where TSendObserver : class, ISendObserver
+        {
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options =>
+            {
+                options.SendObserverRegistrations.Add(new SendObserverRegistration
+                {
+                    Type = typeof(TSendObserver),
+                    ImplementationFactory = implementationFactory
+                });
+            });
+            return builder;
+        }
+
+        public static IActiveMqBuilder AddReceiveObserver<TReceiveObserver>(this IActiveMqBuilder builder) where TReceiveObserver : class, IReceiveObserver
+        {
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options => options.ReceiveObserverRegistrations.Add(new ReceiveObserverRegistration
+            {
+                Type = typeof(TReceiveObserver)
+            }));
+            return builder;
+        }
+
+        public static IActiveMqBuilder AddReceiveObserver<TReceiveObserver>(this IActiveMqBuilder builder, Func<IServiceProvider, IReceiveObserver> implementationFactory) where TReceiveObserver : class, IReceiveObserver
+        {
+            builder.Services.Configure<ActiveMqOptions>(builder.Name, options => options.ReceiveObserverRegistrations.Add(new ReceiveObserverRegistration
+            {
+                Type = typeof(TReceiveObserver),
+                ImplementationFactory = implementationFactory
+            }));
+            return builder;
         }
     }
 }
