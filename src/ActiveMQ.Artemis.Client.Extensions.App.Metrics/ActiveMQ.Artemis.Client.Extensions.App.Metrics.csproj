@@ -1,8 +1,19 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <Summary>App.Metrics support ActiveMQ Artemis .NET Client</Summary>
+    <Description>App.Metrics support ActiveMQ Artemis .NET Client.</Description>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
+    <PackageProjectUrl>https://havret.github.io/dotnet-activemq-artemis-client/</PackageProjectUrl>
+    <PackageId>Unofficial.ActiveMQ.Artemis.Client.Extensions.App.Metrics</PackageId>
+    <PackageLicenseUrl>https://github.com/Havret/activemq-artemis-extensions/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/Havret/activemq-artemis-extensions</RepositoryUrl>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <Authors>Havret</Authors>
   </PropertyGroup>
 
   <ItemGroup>    
