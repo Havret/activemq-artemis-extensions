@@ -37,7 +37,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
             var queues = await topologyManager.GetQueueNamesAsync(cancellationToken).ConfigureAwait(false);
             foreach (var queueConfiguration in _queueConfigurations.Where(x => !queues.Contains(x.Name)))
             {
-                await topologyManager.CreateQueueAsync(queueConfiguration, cancellationToken).ConfigureAwait(false);
+                await topologyManager.DeclareQueueAsync(queueConfiguration, cancellationToken).ConfigureAwait(false);
             }
         }
     }
