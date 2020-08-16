@@ -39,7 +39,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         {
             foreach (var activeMqConsumer in _consumers)
             {
-                await activeMqConsumer.StopAsync();
+                await activeMqConsumer.StopAsync().ConfigureAwait(false);
             }
         }
     }

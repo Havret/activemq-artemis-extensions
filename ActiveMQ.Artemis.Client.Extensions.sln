@@ -18,6 +18,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Ext
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Extensions.Hosting", "src\ActiveMQ.Artemis.Client.Extensions.Hosting\ActiveMQ.Artemis.Client.Extensions.Hosting.csproj", "{134FB64F-1303-4C99-B12A-21B739B8E806}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Extensions.LeaderElection", "src\ActiveMQ.Artemis.Client.Extensions.LeaderElection\ActiveMQ.Artemis.Client.Extensions.LeaderElection.csproj", "{EBA959E3-E6FD-4B52-858E-34FED789BD4D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Examples.LeaderElection", "samples\ActiveMQ.Artemis.Client.Examples.LeaderElection\ActiveMQ.Artemis.Client.Examples.LeaderElection.csproj", "{E4765778-4AF5-4408-801E-FF4BD11B3396}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,11 +56,20 @@ Global
 		{134FB64F-1303-4C99-B12A-21B739B8E806}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{134FB64F-1303-4C99-B12A-21B739B8E806}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{134FB64F-1303-4C99-B12A-21B739B8E806}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBA959E3-E6FD-4B52-858E-34FED789BD4D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBA959E3-E6FD-4B52-858E-34FED789BD4D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBA959E3-E6FD-4B52-858E-34FED789BD4D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBA959E3-E6FD-4B52-858E-34FED789BD4D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E4765778-4AF5-4408-801E-FF4BD11B3396}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E4765778-4AF5-4408-801E-FF4BD11B3396}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E4765778-4AF5-4408-801E-FF4BD11B3396}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E4765778-4AF5-4408-801E-FF4BD11B3396}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{92585EBE-6D7C-4D4A-A68D-0902A35F1423} = {52FE627B-08F8-40E6-8FAB-23B29B4BB6EE}
 		{717C6E89-1E14-459C-AA15-AE9B84D44EEC} = {CE6D731E-5904-4250-A005-C2D6D32961B3}
 		{E86CB7C6-BDA5-409D-9A65-654B6DC65413} = {CE6D731E-5904-4250-A005-C2D6D32961B3}
 		{3A4905A3-D6C3-4D5C-8285-F26DB9B6F847} = {CE6D731E-5904-4250-A005-C2D6D32961B3}
+		{E4765778-4AF5-4408-801E-FF4BD11B3396} = {52FE627B-08F8-40E6-8FAB-23B29B4BB6EE}
 	EndGlobalSection
 EndGlobal
