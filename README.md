@@ -9,3 +9,4 @@ Set of extension packages that make integration of [.NET Client for ActiveMQ Art
 |ActiveMQ.Artemis.Client.Extensions.DependencyInjection|[![NuGet](https://img.shields.io/nuget/vpre/Unofficial.ActiveMQ.Artemis.Client.Extensions.DependencyInjection.svg)](https://www.nuget.org/packages/Unofficial.ActiveMQ.Artemis.Client.Extensions.DependencyInjection/)
 |ActiveMQ.Artemis.Client.Extensions.Hosting |[![NuGet](https://img.shields.io/nuget/vpre/Unofficial.ActiveMQ.Artemis.Client.Extensions.Hosting.svg)](https://www.nuget.org/packages/Unofficial.ActiveMQ.Artemis.Client.Extensions.Hosting/)
 |ActiveMQ.Artemis.Client.Extensions.App.Metrics |[![NuGet](https://img.shields.io/nuget/vpre/Unofficial.ActiveMQ.Artemis.Client.Extensions.App.Metrics.svg)](https://www.nuget.org/packages/Unofficial.ActiveMQ.Artemis.Client.Extensions.App.Metrics/)
+|ActiveMQ.Artemis.Client.Extensions.LeaderElection |
