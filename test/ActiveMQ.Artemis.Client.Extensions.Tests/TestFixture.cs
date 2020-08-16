@@ -75,6 +75,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             await Connection.DisposeAsync();
             await _host.StopAsync(_cts.Token);
             
+            // ReSharper disable once SuspiciousTypeConversion.Global
             if (_host is IAsyncDisposable host)
                 await host.DisposeAsync();
             else

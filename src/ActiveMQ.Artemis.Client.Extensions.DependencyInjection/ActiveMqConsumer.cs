@@ -32,16 +32,17 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             _cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var token = _cts.Token;
             var consumer = await _consumer.GetValueAsync(cancellationToken);
             _task = Task.Run(async () =>
             {
-                while (!_cts.IsCancellationRequested)
+                while (!token.IsCancellationRequested)
                 {
                     try
                     {
-                        var msg = await consumer.ReceiveAsync(_cts.Token).ConfigureAwait(false);
+                        var msg = await consumer.ReceiveAsync(token).ConfigureAwait(false);
                         _receiveObservable.PreReceive(msg);
-                        await _handler(msg, consumer, _cts.Token, _serviceProvider).ConfigureAwait(false);
+                        await _handler(msg, consumer, token, _serviceProvider).ConfigureAwait(false);
                         _receiveObservable.PostReceive(msg);
                     }
                     catch (OperationCanceledException)
@@ -52,14 +53,14 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
                         _logger.LogError(exception, string.Empty);
                     }
                 }
-            }, cancellationToken);
+            }, token);
         }
 
-        public Task StopAsync()
+        public async Task StopAsync()
         {
             _cts.Cancel();
+            await _task.ConfigureAwait(false);
             _cts.Dispose();
-            return _task;
         }
     }
 }
