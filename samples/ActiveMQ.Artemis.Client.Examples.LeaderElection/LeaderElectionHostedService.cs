@@ -5,7 +5,7 @@ using ActiveMQ.Artemis.Client.Extensions.LeaderElection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace ActiveMQ.Artemis.Client.Examples.AspNetCore
+namespace ActiveMQ.Artemis.Client.Examples.LeaderElection
 {
     public class LeaderElectionHostedService : IHostedService
     {

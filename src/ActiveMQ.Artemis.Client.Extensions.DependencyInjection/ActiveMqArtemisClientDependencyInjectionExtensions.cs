@@ -106,7 +106,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         /// <param name="routingType">The routing type of the address.</param>
         /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
-        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, Func<Message, IConsumer, IServiceProvider, CancellationToken, Task> handler)
         {
             return builder.AddConsumer(address, routingType, new ConsumerOptions(), handler);
         }
@@ -121,7 +121,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
         public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, ConsumerOptions consumerOptions,
-            Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+            Func<Message, IConsumer, IServiceProvider, CancellationToken, Task> handler)
         {
             for (int i = 0; i < consumerOptions.ConcurrentConsumers; i++)
             {
@@ -151,7 +151,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         /// <param name="queue">The queue name.</param>
         /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
-        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+        public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, Func<Message, IConsumer, IServiceProvider, CancellationToken, Task> handler)
         {
             return builder.AddConsumer(address, routingType, queue, new ConsumerOptions(), new QueueOptions(), handler);
         }
@@ -167,7 +167,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
         public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, ConsumerOptions consumerOptions,
-            Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+            Func<Message, IConsumer, IServiceProvider, CancellationToken, Task> handler)
         {
             return builder.AddConsumer(address, routingType, queue, consumerOptions, new QueueOptions(), handler);
         }
@@ -183,7 +183,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
         public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, QueueOptions queueOptions,
-            Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+            Func<Message, IConsumer, IServiceProvider, CancellationToken, Task> handler)
         {
             return builder.AddConsumer(address, routingType, queue, new ConsumerOptions(), queueOptions, handler);
         }
@@ -200,7 +200,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         /// <param name="handler">A delegate that will be invoked when messages arrive.</param>
         /// <returns>The <see cref="IActiveMqBuilder"/> that can be used to configure ActiveMQ Artemis Client.</returns>
         public static IActiveMqBuilder AddConsumer(this IActiveMqBuilder builder, string address, RoutingType routingType, string queue, ConsumerOptions consumerOptions, QueueOptions queueOptions,
-            Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+            Func<Message, IConsumer, IServiceProvider, CancellationToken, Task> handler)
         {
             builder.Services.Configure<ActiveMqOptions>(builder.Name, options =>
             {
@@ -249,7 +249,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         private static void AddConsumer(this IActiveMqBuilder builder,
             ConsumerConfiguration consumerConfiguration,
             Action<ContextualReceiveObservable> configureContextualReceiveObservableAction,
-            Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+            Func<Message, IConsumer, IServiceProvider, CancellationToken, Task> handler)
         {
             builder.Services.AddSingleton(provider =>
             {

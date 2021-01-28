@@ -26,7 +26,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
 
             var consumers = new ConcurrentBag<IConsumer>();
 
-            async Task MessageHandler(Message message, IConsumer consumer, CancellationToken token, IServiceProvider provider)
+            async Task MessageHandler(Message message, IConsumer consumer, IServiceProvider provider, CancellationToken token)
             {
                 consumers.Add(consumer);
                 await consumer.AcceptAsync(message);
@@ -58,7 +58,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             {
                 builder.EnableAddressDeclaration()
                        .EnableQueueDeclaration()
-                       .AddConsumer(address, RoutingType.Multicast, queue, async (message, consumer, token, serviceProvider) =>
+                       .AddConsumer(address, RoutingType.Multicast, queue, async (message, consumer, serviceProvider, token) =>
                        {
                            await Task.Delay(TimeSpan.FromMinutes(10), token);
                            await consumer.AcceptAsync(message);
