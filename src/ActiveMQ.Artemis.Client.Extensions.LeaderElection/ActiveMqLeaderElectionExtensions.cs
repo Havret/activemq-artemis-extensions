@@ -23,7 +23,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.LeaderElection
                 throw new ArgumentException($"{nameof(LeaderElectionOptions.HandOverAfterMissedElectionMessages)} must greater than 0.", nameof(LeaderElectionOptions.ElectionAddress));
             }
             
-            builder.AddConsumer(options.ElectionAddress, RoutingType.Anycast, async (message, consumer, cancellationToken, serviceProvider) =>
+            builder.AddConsumer(options.ElectionAddress, RoutingType.Anycast, async (message, consumer, serviceProvider, cancellationToken) =>
             {
                 var leaderElection = serviceProvider.GetService<LeaderElection>();
                 leaderElection.OnElectionMessage();

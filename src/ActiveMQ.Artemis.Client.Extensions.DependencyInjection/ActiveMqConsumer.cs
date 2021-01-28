@@ -12,7 +12,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         private readonly IServiceProvider _serviceProvider;
         private readonly ContextualReceiveObservable _receiveObservable;
         private readonly AsyncValueLazy<IConsumer> _consumer;
-        private readonly Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> _handler;
+        private readonly Func<Message, IConsumer, IServiceProvider, CancellationToken, Task> _handler;
         private Task _task;
         private CancellationTokenSource _cts;
         private readonly ILogger<ActiveMqConsumer> _logger;
@@ -20,7 +20,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         public ActiveMqConsumer(IServiceProvider serviceProvider,
             ContextualReceiveObservable receiveObservable,
             Func<CancellationToken, Task<IConsumer>> consumerFactory,
-            Func<Message, IConsumer, CancellationToken, IServiceProvider, Task> handler)
+            Func<Message, IConsumer, IServiceProvider, CancellationToken, Task> handler)
         {
             _serviceProvider = serviceProvider;
             _receiveObservable = receiveObservable;
@@ -42,7 +42,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
                     {
                         var msg = await consumer.ReceiveAsync(token).ConfigureAwait(false);
                         _receiveObservable.PreReceive(msg);
-                        await _handler(msg, consumer, token, _serviceProvider).ConfigureAwait(false);
+                        await _handler(msg, consumer, _serviceProvider, token).ConfigureAwait(false);
                         _receiveObservable.PostReceive(msg);
                     }
                     catch (OperationCanceledException)

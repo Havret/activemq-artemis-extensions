@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using ActiveMQ.Artemis.Client.AutoRecovering.RecoveryPolicy;
-using ActiveMQ.Artemis.Client.Examples.AspNetCore;
 using ActiveMQ.Artemis.Client.Extensions.DependencyInjection;
 using ActiveMQ.Artemis.Client.Extensions.Hosting;
 using ActiveMQ.Artemis.Client.Extensions.LeaderElection;
