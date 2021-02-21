@@ -2,25 +2,25 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{52FE627B-08F8-40E6-8FAB-23B29B4BB6EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Examples.AspNetCore", "samples\ActiveMQ.Artemis.Client.Examples.AspNetCore\ActiveMQ.Artemis.Client.Examples.AspNetCore.csproj", "{92585EBE-6D7C-4D4A-A68D-0902A35F1423}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Examples.AspNetCore", "samples\ArtemisNetClient.Examples.AspNetCore\ArtemisNetClient.Examples.AspNetCore.csproj", "{92585EBE-6D7C-4D4A-A68D-0902A35F1423}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Extensions.Tests", "test\ActiveMQ.Artemis.Client.Extensions.Tests\ActiveMQ.Artemis.Client.Extensions.Tests.csproj", "{717C6E89-1E14-459C-AA15-AE9B84D44EEC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Extensions.Tests", "test\ArtemisNetClient.Extensions.Tests\ArtemisNetClient.Extensions.Tests.csproj", "{717C6E89-1E14-459C-AA15-AE9B84D44EEC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{CE6D731E-5904-4250-A005-C2D6D32961B3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Extensions.App.Metrics", "src\ActiveMQ.Artemis.Client.Extensions.App.Metrics\ActiveMQ.Artemis.Client.Extensions.App.Metrics.csproj", "{A4333557-8634-4FF4-9332-9E4C37F183EA}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Extensions.App.Metrics", "src\ArtemisNetClient.Extensions.App.Metrics\ArtemisNetClient.Extensions.App.Metrics.csproj", "{A4333557-8634-4FF4-9332-9E4C37F183EA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Extensions.App.Metrics.Tests", "test\ActiveMQ.Artemis.Client.Extensions.App.Metrics.Tests\ActiveMQ.Artemis.Client.Extensions.App.Metrics.Tests.csproj", "{E86CB7C6-BDA5-409D-9A65-654B6DC65413}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Extensions.App.Metrics.Tests", "test\ArtemisNetClient.Extensions.App.Metrics.Tests\ArtemisNetClient.Extensions.App.Metrics.Tests.csproj", "{E86CB7C6-BDA5-409D-9A65-654B6DC65413}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Extensions.TestUtils", "test\ActiveMQ.Artemis.Client.Extensions.TestUtils\ActiveMQ.Artemis.Client.Extensions.TestUtils.csproj", "{3A4905A3-D6C3-4D5C-8285-F26DB9B6F847}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Extensions.TestUtils", "test\ArtemisNetClient.Extensions.TestUtils\ArtemisNetClient.Extensions.TestUtils.csproj", "{3A4905A3-D6C3-4D5C-8285-F26DB9B6F847}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Extensions.DependencyInjection", "src\ActiveMQ.Artemis.Client.Extensions.DependencyInjection\ActiveMQ.Artemis.Client.Extensions.DependencyInjection.csproj", "{B1D707F1-E4B7-4F29-8498-A5FDA865CE21}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Extensions.DependencyInjection", "src\ArtemisNetClient.Extensions.DependencyInjection\ArtemisNetClient.Extensions.DependencyInjection.csproj", "{B1D707F1-E4B7-4F29-8498-A5FDA865CE21}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Extensions.Hosting", "src\ActiveMQ.Artemis.Client.Extensions.Hosting\ActiveMQ.Artemis.Client.Extensions.Hosting.csproj", "{134FB64F-1303-4C99-B12A-21B739B8E806}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Extensions.Hosting", "src\ArtemisNetClient.Extensions.Hosting\ArtemisNetClient.Extensions.Hosting.csproj", "{134FB64F-1303-4C99-B12A-21B739B8E806}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Extensions.LeaderElection", "src\ActiveMQ.Artemis.Client.Extensions.LeaderElection\ActiveMQ.Artemis.Client.Extensions.LeaderElection.csproj", "{EBA959E3-E6FD-4B52-858E-34FED789BD4D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Extensions.LeaderElection", "src\ArtemisNetClient.Extensions.LeaderElection\ArtemisNetClient.Extensions.LeaderElection.csproj", "{EBA959E3-E6FD-4B52-858E-34FED789BD4D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ActiveMQ.Artemis.Client.Examples.LeaderElection", "samples\ActiveMQ.Artemis.Client.Examples.LeaderElection\ActiveMQ.Artemis.Client.Examples.LeaderElection.csproj", "{E4765778-4AF5-4408-801E-FF4BD11B3396}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Examples.LeaderElection", "samples\ArtemisNetClient.Examples.LeaderElection\ArtemisNetClient.Examples.LeaderElection.csproj", "{E4765778-4AF5-4408-801E-FF4BD11B3396}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
