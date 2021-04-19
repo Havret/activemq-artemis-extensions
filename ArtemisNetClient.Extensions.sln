@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Extensions
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Examples.LeaderElection", "samples\ArtemisNetClient.Examples.LeaderElection\ArtemisNetClient.Examples.LeaderElection.csproj", "{E4765778-4AF5-4408-801E-FF4BD11B3396}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArtemisNetClient.Examples.ConsoleApplication", "samples\ArtemisNetClient.Examples.ConsoleApplication\ArtemisNetClient.Examples.ConsoleApplication.csproj", "{E9C75D21-7257-44D2-87F3-60F1D1683C39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -64,6 +66,10 @@ Global
 		{E4765778-4AF5-4408-801E-FF4BD11B3396}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E4765778-4AF5-4408-801E-FF4BD11B3396}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E4765778-4AF5-4408-801E-FF4BD11B3396}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9C75D21-7257-44D2-87F3-60F1D1683C39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9C75D21-7257-44D2-87F3-60F1D1683C39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9C75D21-7257-44D2-87F3-60F1D1683C39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9C75D21-7257-44D2-87F3-60F1D1683C39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{92585EBE-6D7C-4D4A-A68D-0902A35F1423} = {52FE627B-08F8-40E6-8FAB-23B29B4BB6EE}
@@ -71,5 +77,6 @@ Global
 		{E86CB7C6-BDA5-409D-9A65-654B6DC65413} = {CE6D731E-5904-4250-A005-C2D6D32961B3}
 		{3A4905A3-D6C3-4D5C-8285-F26DB9B6F847} = {CE6D731E-5904-4250-A005-C2D6D32961B3}
 		{E4765778-4AF5-4408-801E-FF4BD11B3396} = {52FE627B-08F8-40E6-8FAB-23B29B4BB6EE}
+		{E9C75D21-7257-44D2-87F3-60F1D1683C39} = {52FE627B-08F8-40E6-8FAB-23B29B4BB6EE}
 	EndGlobalSection
 EndGlobal
