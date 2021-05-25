@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ActiveMQ.Artemis.Client.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
+using Nito.AsyncEx;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -22,10 +23,12 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
         public async Task Should_start_and_stop_client_multiple_times()
         {
             var address = Guid.NewGuid().ToString();
+            var asyncCountdownEvent = new AsyncCountdownEvent(2);
             var msgBag = new ConcurrentBag<Message>();
             async Task MessageHandler(Message msg, IConsumer consumer, IServiceProvider provider, CancellationToken cancellationToken)
             {
                 msgBag.Add(msg);
+                asyncCountdownEvent.Signal();
                 await consumer.AcceptAsync(msg);
             }
             
@@ -47,7 +50,8 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             
             await testProducer.SendMessage("msg-1", CancellationToken.None);
             await testAnonymousProducer.SendMessage(address, RoutingType.Multicast, "msg-2", CancellationToken.None);
-            
+
+            await asyncCountdownEvent.WaitAsync();
             Assert.Equal(2, msgBag.Count);
             
             // STEP 4: Stop the client
@@ -59,11 +63,13 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             
             // STEP 6: Restart the client
             await activeMqClient.StartAsync(CancellationToken.None);
-            
+            asyncCountdownEvent.AddCount(2);
+
             // STEP 7: Send the second round of messages
             await testProducer.SendMessage("msg-5", CancellationToken.None);
             await testAnonymousProducer.SendMessage(address, RoutingType.Multicast, "msg-6", CancellationToken.None);
             
+            await asyncCountdownEvent.WaitAsync();
             Assert.Equal(4, msgBag.Count);
         }
 
