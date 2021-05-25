@@ -7,6 +7,7 @@ using ActiveMQ.Artemis.Client.Extensions.DependencyInjection.InternalExtensions;
 using ActiveMQ.Artemis.Client.Extensions.DependencyInjection.InternalUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
@@ -259,7 +260,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
                 return new ActiveMqConsumer(provider, contextualReceiveObservable, async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token);
-                    return await connection.CreateConsumerAsync(consumerConfiguration, token);
+                    return await connection.CreateConsumerAsync(consumerConfiguration, token).ConfigureAwait(false);
                 }, handler);
             });
         }
@@ -375,18 +376,19 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
             builder.Services.AddSingleton(provider =>
             {
                 var sendObservable = provider.GetServices<SendObservable>().Single(x => x.Name == builder.Name);
+                var logger = provider.GetService<ILogger<TypedActiveMqProducer<TProducer>>>();
                 var contextualSendObservable = new ContextualSendObservable(sendObservable)
                 {
                     Address = producerConfiguration.Address,
                     RoutingType = producerConfiguration.RoutingType
                 };
-                return new TypedActiveMqProducer<TProducer>(async token =>
+                return new TypedActiveMqProducer<TProducer>(logger, async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token);
-                    return await connection.CreateProducerAsync(producerConfiguration, token);
+                    return await connection.CreateProducerAsync(producerConfiguration, token).ConfigureAwait(false);
                 }, contextualSendObservable);
             });
-            builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqProducer<TProducer>>());
+            builder.Services.AddSingleton<IActiveMqProducer>(provider => provider.GetRequiredService<TypedActiveMqProducer<TProducer>>());
             builder.Services.Add(ServiceDescriptor.Describe(typeof(TProducer),
                 provider => ActivatorUtilities.CreateInstance<TProducer>(provider, provider.GetRequiredService<TypedActiveMqProducer<TProducer>>()),
                 producerLifetime));
@@ -442,13 +444,14 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
             builder.Services.AddSingleton(provider =>
             {
                 var sendObservable = provider.GetServices<SendObservable>().Single(x => x.Name == builder.Name);
-                return new TypedActiveMqAnonymousProducer<TProducer>(async token =>
+                var logger = provider.GetService<ILogger<TypedActiveMqAnonymousProducer<TProducer>>>();
+                return new TypedActiveMqAnonymousProducer<TProducer>(logger, async token =>
                 {
                     var connection = await provider.GetConnection(builder.Name, token).ConfigureAwait(false);
                     return await connection.CreateAnonymousProducerAsync(producerConfiguration, token).ConfigureAwait(false);
                 }, sendObservable);
             });
-            builder.Services.AddSingleton<IProducerInitializer>(provider => provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>());
+            builder.Services.AddSingleton<IActiveMqProducer>(provider => provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>());
             builder.Services.Add(ServiceDescriptor.Describe(typeof(TProducer),
                 provider => ActivatorUtilities.CreateInstance<TProducer>(provider, provider.GetRequiredService<TypedActiveMqAnonymousProducer<TProducer>>()),
                 producerLifetime));

@@ -8,9 +8,9 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
     {
         private readonly IEnumerable<ActiveMqTopologyManager> _topologyManagers;
         private readonly IEnumerable<ActiveMqConsumer> _consumers;
-        private readonly IEnumerable<IProducerInitializer> _producerInitializers;
+        private readonly IEnumerable<IActiveMqProducer> _producerInitializers;
 
-        public ActiveMqClient(IEnumerable<ActiveMqTopologyManager> topologyManagers, IEnumerable<ActiveMqConsumer> consumers, IEnumerable<IProducerInitializer> producerInitializers)
+        public ActiveMqClient(IEnumerable<ActiveMqTopologyManager> topologyManagers, IEnumerable<ActiveMqConsumer> consumers, IEnumerable<IActiveMqProducer> producerInitializers)
         {
             _topologyManagers = topologyManagers;
             _consumers = consumers;
@@ -21,7 +21,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         {
             foreach (var producer in _producerInitializers)
             {
-                await producer.Initialize(cancellationToken).ConfigureAwait(false);
+                await producer.StartAsync(cancellationToken).ConfigureAwait(false);
             }
             
             foreach (var activeMqTopologyManager in _topologyManagers)
@@ -40,6 +40,11 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
             foreach (var activeMqConsumer in _consumers)
             {
                 await activeMqConsumer.StopAsync().ConfigureAwait(false);
+            }
+
+            foreach (var producer in _producerInitializers)
+            {
+                await producer.StopAsync().ConfigureAwait(false);
             }
         }
     }
