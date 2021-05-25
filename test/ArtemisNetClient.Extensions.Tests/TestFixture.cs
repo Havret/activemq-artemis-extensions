@@ -27,7 +27,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
             _cts = cts;
         }
 
-        public static async Task<TestFixture> CreateAsync(ITestOutputHelper testOutputHelper, Action<IActiveMqBuilder> configureActiveMq = null, Action<IServiceCollection> configureServices = null)
+        public static async Task<TestFixture> CreateAsync(ITestOutputHelper testOutputHelper, Action<IActiveMqBuilder> configureActiveMq = null, Action<IServiceCollection> configureServices = null, bool addActiveMqHostedService = true)
         {
             var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             var endpoints = new[] { Endpoint.Create(host: "localhost", port: 5672, "guest", "guest") };
@@ -43,7 +43,10 @@ namespace ActiveMQ.Artemis.Client.Extensions.AspNetCore.Tests
                                    {
                                        factory.LoggerFactory = provider.GetService<ILoggerFactory>();
                                    }));
-                                   services.AddActiveMqHostedService();
+                                   if (addActiveMqHostedService)
+                                   {
+                                       services.AddActiveMqHostedService();    
+                                   }
                                })
                                .Configure(app => { })
                                .ConfigureLogging((hostingContext, logging) =>

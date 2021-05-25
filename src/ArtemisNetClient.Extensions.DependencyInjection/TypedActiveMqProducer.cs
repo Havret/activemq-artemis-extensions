@@ -2,22 +2,25 @@
 using System.Threading;
 using System.Threading.Tasks;
 using ActiveMQ.Artemis.Client.Transactions;
+using Microsoft.Extensions.Logging;
 
 namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
 {
-    internal class TypedActiveMqProducer<T> : IProducer, IProducerInitializer
+    internal class TypedActiveMqProducer<T> : IProducer, IActiveMqProducer
     {
         private IProducer _producer;
+        private readonly ILogger<TypedActiveMqProducer<T>> _logger;
         private readonly Func<CancellationToken, Task<IProducer>> _producerFactory;
         private readonly ContextualSendObservable _sendObservable;
 
-        public TypedActiveMqProducer(Func<CancellationToken, Task<IProducer>> producerFactory, ContextualSendObservable sendObservable)
+        public TypedActiveMqProducer(ILogger<TypedActiveMqProducer<T>> logger, Func<CancellationToken, Task<IProducer>> producerFactory, ContextualSendObservable sendObservable)
         {
+            _logger = logger;
             _producerFactory = producerFactory;
             _sendObservable = sendObservable;
         }
 
-        async ValueTask IProducerInitializer.Initialize(CancellationToken cancellationToken)
+        async ValueTask IActiveMqProducer.StartAsync(CancellationToken cancellationToken)
         {
             if (_producer != null)
             {
@@ -25,6 +28,22 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
             }
 
             _producer = await _producerFactory(cancellationToken);
+        }
+
+        public async ValueTask StopAsync()
+        {
+            try
+            {
+                await DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Exception occured during producer stopping");
+            }
+            finally
+            {
+                _producer = null;                
+            }
         }
 
         public async Task SendAsync(Message message, Transaction transaction, CancellationToken cancellationToken)
@@ -47,7 +66,7 @@ namespace ActiveMQ.Artemis.Client.Extensions.DependencyInjection
         {
             if (_producer == null)
             {
-                throw new InvalidOperationException("Producer was not initialized.");
+                throw new InvalidOperationException("Producer was not started.");
             }
         }
 
