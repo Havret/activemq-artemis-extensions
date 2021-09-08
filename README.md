@@ -1,4 +1,5 @@
-# ActiveMQ Artemis .NET Client extensions
+# ActiveMQ Artemis .NET Client extensions [Archived]
+This GitHub project has been archived. Ongoing development can be found in https://github.com/Havret/dotnet-activemq-artemis-client.
 
 ![Build](https://github.com/Havret/activemq-artemis-extensions-aspnetcore/workflows/Build/badge.svg)
 
